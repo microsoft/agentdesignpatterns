@@ -1,0 +1,5 @@
+site_name: Agent Design Patterns
+
+nav:
+  - Bounded Tool Calls: index.md
+  - Unbounded Retries: unbounded-retries.md

@@ -1,5 +1,11 @@
 # Agent Design Patterns
 
-An evolving catalog of design patterns and anti-patterns for building reliable AI agents.
+This repository will publish documentation about AI agent design patterns and anti-patterns.
 
-Each article turns a recurring design problem into concrete implementation guidance. The goal is not merely to name useful ideas or common mistakes, but to explain when they apply, how they work, what tradeoffs they introduce, and how to verify an implementation in practice.
+The current site contains two sample articles and is intentionally minimal while the GitHub Pages workflow is exercised.
+
+## Run Locally
+
+```shell
+./tools/serve.sh
+```
