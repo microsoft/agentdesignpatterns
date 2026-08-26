@@ -1,5 +1,12 @@
 site_name: Agent Design Patterns
 
+markdown_extensions:
+  - meta
+
 nav:
-  - Bounded Tool Calls: index.md
-  - Unbounded Retries: unbounded-retries.md
+  - Introduction: index.md
+  - Patterns:
+      - Bounded Tool Calls: patterns/bounded-tool-calls.md
+  - Anti-Patterns:
+      - Unbounded Retries: anti-patterns/unbounded-retries.md
+  - Contributing: contributing.md

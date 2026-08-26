@@ -1,16 +1,12 @@
-# Pattern: Bounded Tool Calls
+---
+title: Introduction
+description: An introduction to the Agent Design Patterns catalog.
+---
 
-Limit the number of tool calls an agent may make while completing a task.
+# Agent Design Patterns
 
-A call budget prevents accidental loops from consuming resources indefinitely. Track each tool call, stop when the budget is exhausted, and return a clear explanation of what remains unfinished.
+This site collects patterns and anti-patterns for building AI agents.
 
-The budget should match the task. A small lookup may need only a few calls, while a repository-wide change may need more.
+Patterns describe reusable approaches to recurring design problems. Anti-patterns describe approaches that commonly lead to unreliable or ineffective behavior.
 
-```python
-for attempt in range(max_tool_calls):
-	result = call_tool()
-	if task_is_complete(result):
-		break
-else:
-	report_incomplete_task()
-```
+The current articles are samples used to exercise the publishing workflow.

@@ -1,4 +1,10 @@
-# Anti-Pattern: Unbounded Retries
+---
+title: Unbounded Retries
+description: Avoid retry loops that repeat failed actions without changing strategy.
+type: anti-pattern
+---
+
+# Unbounded Retries
 
 An agent retries a failed action without a limit or a meaningful change in strategy.
 
