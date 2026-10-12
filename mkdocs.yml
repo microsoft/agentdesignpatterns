@@ -4,7 +4,10 @@ copyright: "Copyright © Microsoft 2026"
 
 theme:
   name: material
+  icon:
+    logo: fontawesome/solid/hexagon-nodes
   features:
+    - navigation.expand
     - navigation.indexes
     - navigation.sections
     - search.highlight
@@ -35,13 +38,5 @@ extra_javascript:
 
 nav:
   - Introduction: index.md
-  - Patterns:
-      - Overview: patterns/index.md
-      - Bounded Tool Calls: patterns/bounded-tool-calls.md
-  - Anti-Patterns:
-      - Overview: anti-patterns/index.md
-      - Deterministic Multi-Agent Routing: anti-patterns/deterministic-multi-agent-routing.md
-      - Tool Pass-Through Agent: anti-patterns/tool-pass-through-agent.md
-      - Unbounded Retries: anti-patterns/unbounded-retries.md
   - Tags: tags.md
   - Contributing: contributing.md

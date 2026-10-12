@@ -72,6 +72,7 @@ def on_config(config: Any) -> Any:
                     f"{article['src_uri']}: an article cannot relate to itself"
                 )
 
+    config["nav"] = _build_navigation()
     return config
 
 
@@ -162,38 +163,117 @@ def _validate_article(
 
 
 def _render_index(index_type: str, page: Page, files: Files) -> str:
-    article_types = (
-        ARTICLE_TYPES.keys() if index_type == "all" else (index_type,)
-    )
+    if index_type == "all":
+        return _render_category_index(page, files)
+
     sections: list[str] = []
+    matching = [
+        article
+        for article in _articles.values()
+        if article["type"] == index_type
+    ]
 
-    for article_type in article_types:
-        matching = [
-            article
-            for article in _articles.values()
-            if article["type"] == article_type
-        ]
-        if not matching:
-            continue
-
-        if index_type == "all":
-            sections.append(f"## {ARTICLE_TYPES[article_type]['title']}")
-
-        categories = sorted({article["category"] for article in matching})
-        for category in categories:
-            heading = "###" if index_type == "all" else "##"
-            sections.append(f"{heading} {category}")
-            for article in sorted(
-                (item for item in matching if item["category"] == category),
-                key=lambda item: item["title"],
-            ):
-                target = files.get_file_from_path(article["src_uri"])
-                url = get_relative_url(target.src_uri, page.file.src_uri)
-                sections.append(
-                    f"- [{article['title']}]({url}) — {article['description']}"
-                )
+    categories = sorted({article["category"] for article in matching})
+    for category in categories:
+        sections.append(f"## {category}")
+        for article in sorted(
+            (item for item in matching if item["category"] == category),
+            key=lambda item: item["title"],
+        ):
+            target = files.get_file_from_path(article["src_uri"])
+            url = get_relative_url(target.src_uri, page.file.src_uri)
+            sections.append(
+                f"- [{article['title']}]({url}) — {article['description']}"
+            )
 
     return "\n\n".join(sections)
+
+
+def _render_category_index(page: Page, files: Files) -> str:
+    sections: list[str] = []
+    categories = sorted({article["category"] for article in _articles.values()})
+
+    for category in categories:
+        sections.append(f"## {category}")
+        sections.append('<div class="catalog-category-grid">')
+
+        for article_type, rules in ARTICLE_TYPES.items():
+            articles = sorted(
+                (
+                    article
+                    for article in _articles.values()
+                    if article["type"] == article_type
+                    and article["category"] == category
+                ),
+                key=lambda article: article["title"],
+            )
+            sections.append('<section class="catalog-category-column">')
+            sections.append(f"<h3>{html.escape(rules['title'])}</h3>")
+
+            if articles:
+                sections.append('<ul class="catalog-article-list">')
+                for article in articles:
+                    target = files.get_file_from_path(article["src_uri"])
+                    url = get_relative_url(target.src_uri, page.file.src_uri)
+                    sections.append(
+                        "<li>"
+                        f'<a href="{html.escape(url, quote=True)}">'
+                        f"{html.escape(article['title'])}</a>"
+                        f"<p>{html.escape(article['description'])}</p>"
+                        "</li>"
+                    )
+                sections.append("</ul>")
+            else:
+                sections.append(
+                    f'<p class="catalog-empty">No {rules["title"].lower()} '
+                    "in this category yet.</p>"
+                )
+
+            sections.append("</section>")
+
+        sections.append("</div>")
+
+    return "\n".join(sections)
+
+
+def _build_navigation() -> list[dict[str, Any]]:
+    navigation: list[dict[str, Any]] = [{"Introduction": "index.md"}]
+    categories = sorted({article["category"] for article in _articles.values()})
+
+    for category in categories:
+        groups: list[dict[str, list[dict[str, str]]]] = []
+
+        for article_type, rules in ARTICLE_TYPES.items():
+            articles = sorted(
+                (
+                    article
+                    for article in _articles.values()
+                    if article["type"] == article_type
+                    and article["category"] == category
+                ),
+                key=lambda article: article["title"],
+            )
+            if not articles:
+                continue
+
+            groups.append(
+                {
+                    rules["title"]: [
+                        {article["title"]: article["src_uri"]}
+                        for article in articles
+                    ]
+                }
+            )
+
+        navigation.append({category: groups})
+
+    navigation.extend(
+        [
+            {"Tags": "tags.md"},
+            {"Contributing": "contributing.md"},
+        ]
+    )
+    return navigation
 
 
 def _render_related(article: dict[str, Any], page: Page, files: Files) -> str:

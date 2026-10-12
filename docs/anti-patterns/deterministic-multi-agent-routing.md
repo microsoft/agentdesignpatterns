@@ -3,7 +3,7 @@ id: deterministic-multi-agent-routing
 title: Deterministic Multi-Agent Routing
 description: Avoid model-based dispatch when structured state already determines the target agent.
 type: anti-pattern
-category: Architecture and composition
+category: Architecture and Composition
 tags:
   - architecture
   - cost
