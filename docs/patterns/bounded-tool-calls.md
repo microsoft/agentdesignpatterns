@@ -3,13 +3,13 @@ id: bounded-tool-calls
 title: Bounded Tool Calls
 description: Limit tool execution to prevent runaway agent loops.
 type: pattern
-category: Reliability and control
+category: Tool Calling
 tags:
   - reliability
   - resource-control
   - tool-use
 related:
-  - unbounded-retries
+  - tool-call-circuit-breaker
 ---
 
 # Bounded Tool Calls
@@ -19,6 +19,8 @@ related:
 Set an explicit maximum number of tool calls for each agent run. Count every attempted call, including calls that fail, and stop before invoking a tool when the budget is exhausted.
 
 The agent should return a clear explanation when it reaches the limit, including what it completed and what remains unfinished. A call budget prevents accidental loops from consuming time, tokens, service quotas, or money indefinitely.
+
+Unlike [Contextual Tool Authorization](contextual-tool-authorization.md), which decides whether a specific call is permitted, or [Tool Call Circuit Breaker](tool-call-circuit-breaker.md), which suppresses calls to an unhealthy dependency, this pattern limits aggregate tool use within one agent run.
 
 ## Applicability
 
