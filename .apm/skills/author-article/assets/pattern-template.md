@@ -21,8 +21,8 @@ Explain when and where to apply the pattern.
 
 ## Implementation
 
-Present a focused Microsoft-stack implementation. Hyperlink each named technology to its canonical documentation.
+Present a focused Microsoft-stack implementation. Hyperlink technologies that materially support the pattern's behavior, architecture, or central APIs. Do not link or cite generic language documentation solely because the example uses that language.
 
 ## References
 
-- [Canonical source title](https://example.com/)
+- [Materially relevant canonical source title](https://example.com/)
