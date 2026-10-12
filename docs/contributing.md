@@ -7,6 +7,18 @@ description: Guidance for contributing articles to Agent Design Patterns.
 
 Articles use YAML frontmatter so the site can validate and organize the catalog. IDs must be unique lowercase kebab-case values. Categories provide the groupings on catalog indexes, tags are rendered as navigable links, and `related` contains the IDs of related patterns or anti-patterns.
 
+## Submission Workflow
+
+Create a topic branch from the latest `main`. If you do not have write access to the
+repository, create the branch in your fork. Submit the article through a pull request
+targeting `main`; direct pushes to `main` are not accepted.
+
+Keep each commit meaningful and preserve the pull request's individual commits. If the
+base branch advances, rebase your topic branch onto the latest `main` rather than merging
+`main` into it. Do not squash commits or create merge commits. Maintainers merge approved
+pull requests using GitHub's **Rebase and merge** method after required reviews and checks
+pass.
+
 Pattern frontmatter follows this format:
 
 ```yaml
