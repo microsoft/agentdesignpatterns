@@ -40,6 +40,7 @@ nav:
       - Bounded Tool Calls: patterns/bounded-tool-calls.md
   - Anti-Patterns:
       - Overview: anti-patterns/index.md
+      - Tool Pass-Through Agent: anti-patterns/tool-pass-through-agent.md
       - Unbounded Retries: anti-patterns/unbounded-retries.md
   - Tags: tags.md
   - Contributing: contributing.md
