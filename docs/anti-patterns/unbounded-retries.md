@@ -28,7 +28,7 @@ A reliable implementation classifies failures, retries only transient faults, us
 
 ## Implementation
 
-The following [TypeScript](https://www.typescriptlang.org/docs/) example demonstrates the anti-pattern. **Do not use this implementation.** It retries every error immediately, discards diagnostic information, and has no cancellation or termination condition.
+The following TypeScript example demonstrates the anti-pattern. **Do not use this implementation.** It retries every error immediately, discards diagnostic information, and has no cancellation or termination condition.
 
 ```typescript
 interface Agent {
@@ -49,13 +49,16 @@ async function runUntilSuccess(
 }
 ```
 
-In a [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry) or [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/) application, this loop can repeatedly invoke the model and any tools selected by the agent. Replace it with a bounded retry policy that distinguishes transient failures from permanent failures and returns control to the caller after the final attempt.
+In a [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry) or [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/) application, this loop can repeatedly invoke the model and any tools selected by the agent.
+
+## Recommended Approach
+
+Use a bounded retry policy that distinguishes transient failures from permanent failures and returns control to the caller after the final attempt. Set an attempt or elapsed-time budget, apply exponential backoff with jitter, honor cancellation, and preserve the last useful error. Retry side-effecting operations only when their idempotency guarantees make repetition safe.
 
 ## References
 
 - [Microsoft Foundry overview](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry)
 - [Microsoft Agent Framework overview](https://learn.microsoft.com/en-us/agent-framework/overview/)
-- [TypeScript documentation](https://www.typescriptlang.org/docs/)
 - [Retry pattern — Azure Architecture Center](https://learn.microsoft.com/en-us/azure/architecture/patterns/retry)
 - [Transient fault handling — Azure Architecture Center](https://learn.microsoft.com/en-us/azure/architecture/best-practices/transient-faults)
 - [Agent Looping — Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/agents/looping)
