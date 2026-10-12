@@ -56,15 +56,16 @@ Anti-patterns must contain:
 1. `Anti-Pattern`
 2. `Issue`
 3. `Implementation`
-4. `References`
+4. `Recommended Approach`
+5. `References`
 
 The site renders the frontmatter description as a caption below the article title. Do not repeat it manually. The site also generates the `Related` section, categorized catalog indexes, and tag index from frontmatter.
 
-Implementation examples should use [TypeScript](https://www.typescriptlang.org/docs/) and Microsoft technologies where practical, including [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry) and [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/). Keep examples focused on the behavior being described and omit unrelated setup. An anti-pattern implementation must be clearly identified as an example that readers should not adopt.
+Implementation examples should use TypeScript and Microsoft technologies where practical, including [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry) and [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/). Keep examples focused on the behavior being described and omit unrelated setup. An anti-pattern implementation must be clearly identified as an example that readers should not adopt. Put corrected code and prescriptive replacement guidance in Recommended Approach.
 
-In the Implementation section, hyperlink every named tool, framework, programming language, SDK, service, or other technology to its canonical product overview or reference documentation. The References section must also contain each of those sources, even when the same link appears inline. This makes the implementation readable in place while preserving a complete source list.
+In Implementation and Recommended Approach, hyperlink technologies that materially support the agent behavior, architecture, or APIs central to the example. The References section must also contain each of those sources, even when the same link appears inline.
 
-References should favor Microsoft Learn, Microsoft Tech Community, and other Microsoft sources. Include relevant primary documentation from other publishers when it helps readers apply or understand the article.
+References should favor Microsoft Learn, Microsoft Tech Community, and other Microsoft sources. Include relevant primary documentation from other publishers when it helps readers apply or understand the article. Do not add general-purpose language, credential, serialization, or transport documentation for incidental implementation mechanics unless the article depends on behavior specific to that technology.
 
 ## Run the Site Locally
 

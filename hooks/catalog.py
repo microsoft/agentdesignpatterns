@@ -19,7 +19,13 @@ ARTICLE_TYPES = {
     },
     "anti-pattern": {
         "directory": "anti-patterns",
-        "sections": ["Anti-Pattern", "Issue", "Implementation", "References"],
+        "sections": [
+            "Anti-Pattern",
+            "Issue",
+            "Implementation",
+            "Recommended Approach",
+            "References",
+        ],
         "title": "Anti-Patterns",
     },
 }

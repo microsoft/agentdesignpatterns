@@ -21,8 +21,12 @@ Explain why the behavior causes concrete problems.
 
 ## Implementation
 
-State that the example is intentionally unsafe or unreliable and must not be adopted. Show a concise example, then explain the safer replacement behavior. Hyperlink each named technology to its canonical documentation.
+State that the example is intentionally unsafe or unreliable and must not be adopted. Show a concise example and explain how it fails. Keep corrected code and prescriptive replacement guidance out of this section.
+
+## Recommended Approach
+
+Describe the correct replacement behavior. Include corrected code, a diagram, or both when useful. Link only technologies that materially support the agent behavior, architecture, or central APIs; omit general-purpose references for incidental implementation mechanics.
 
 ## References
 
-- [Canonical source title](https://example.com/)
+- [Materially relevant canonical source title](https://example.com/)

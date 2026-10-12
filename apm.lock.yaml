@@ -9,7 +9,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: sha256:20570962da501c98cf8114c9106523c6f4c7ca5caac5f4fc09a877fbd1e6e849
+  content_hash: sha256:f7e83995f5f27615bd38590a4539239dceee50c2253786b44d52f8cb628b6e10
 - kind: project-relative
   target: copilot
   value: .github/instructions/publishing-workflow.instructions.md
@@ -90,7 +90,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: sha256:9a3479e44d0a6345ed853fa5fdf647f942057920553cd39c6e1a4040c99c65aa
+  content_hash: sha256:68a7d728fa0cf0c076c754f96c0d3c65831a8bcb62955da728e9a16954611ef0
 - kind: project-relative
   target: legacy
   value: .agents/skills/author-article/assets/pattern-template.md
@@ -128,8 +128,8 @@ local_deployed_file_hashes:
   .agents/skills/author-agent-design-article/assets/pattern-template.md: sha256:8e043b3586ea737e55e8e8016271730c70b2555aeb8397cde4dd1c29791c480e
   .agents/skills/author-agent-design-article/references/article-standard.md: sha256:27ade226def347c08546bfb5b494c833cf25dc020bee595e35c71f22509847c4
   .agents/skills/author-article/SKILL.md: sha256:dfe7c5e47cb5925fa6db916909580ae7fdc4624221dfca7e9f14271c68fd25ff
-  .agents/skills/author-article/assets/anti-pattern-template.md: sha256:9a3479e44d0a6345ed853fa5fdf647f942057920553cd39c6e1a4040c99c65aa
+  .agents/skills/author-article/assets/anti-pattern-template.md: sha256:68a7d728fa0cf0c076c754f96c0d3c65831a8bcb62955da728e9a16954611ef0
   .agents/skills/author-article/assets/pattern-template.md: sha256:aee7716f22d446bb834870d173e92b71ea6367bea7e9d60cc899106368e66d56
   .agents/skills/author-article/references/article-standard.md: sha256:27ade226def347c08546bfb5b494c833cf25dc020bee595e35c71f22509847c4
-  .github/instructions/article-standards.instructions.md: sha256:20570962da501c98cf8114c9106523c6f4c7ca5caac5f4fc09a877fbd1e6e849
+  .github/instructions/article-standards.instructions.md: sha256:f7e83995f5f27615bd38590a4539239dceee50c2253786b44d52f8cb628b6e10
   .github/instructions/publishing-workflow.instructions.md: sha256:7df77648f9270e12ed8f52a03da304118d5583337f6f5e63baec38fcd9c3246d
