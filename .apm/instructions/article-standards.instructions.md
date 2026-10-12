@@ -34,7 +34,7 @@ tags:
   - resource-control
   - tool-use
 related:
-  - unbounded-retries
+  - tool-call-circuit-breaker
 ---
 ```
 
@@ -79,6 +79,8 @@ Show how to implement the pattern. Use a Microsoft technology stack where practi
 
 Use real, current APIs when presenting code as directly usable. If exact framework integration would obscure the behavior, a focused TypeScript abstraction is acceptable, but describe clearly how it connects to the Microsoft stack. Do not imply that illustrative code is a complete production implementation.
 
+When a level-two section contains level-three subsections, put all of that section's content inside level-three subsections. Do not leave introductory or shared prose loose before peer subsections. Use `### Introduction` for background that applies to multiple subsections, then give each alternative or implementation strategy its own peer subsection.
+
 ## Anti-Pattern Structure
 
 After the level-one title, use exactly these level-two sections in order:
@@ -111,7 +113,6 @@ In the Implementation and Recommended Approach sections, hyperlink the first mea
 
 - Product or service
 - Framework or SDK
-- Programming language
 - API, protocol, schema, or tool
 - Other technology-stack element
 
@@ -119,11 +120,10 @@ Link to the canonical product overview or reference documentation. Examples:
 
 - [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry)
 - [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/)
-- [TypeScript](https://www.typescriptlang.org/docs/)
 
 Do not link to search results, unofficial summaries, or marketing pages when a canonical overview or reference exists.
 
-Do not add links merely because code uses a general-purpose language feature, credential class, serialization format, or transport protocol. Omit general documentation for incidental mechanics such as the implementation language, an authentication credential, JSON, or HTTP unless the article depends on behavior specific to that technology.
+Do not add links merely because code uses a general-purpose language, language feature, credential class, serialization format, or transport protocol. In particular, do not link or cite generic TypeScript, Python, or other language documentation solely because the example is written in that language. Include language documentation only when the article makes a material claim about language-specific runtime, compiler, type-system, or API behavior. Apply the same test to authentication credentials, JSON, HTTP, and other incidental mechanics.
 
 ## References
 
@@ -134,7 +134,7 @@ The References section is required and must be complete with respect to the Impl
 - Include only sources that materially support the article's agent behavior, architecture, or APIs central to the example.
 - Exclude general-purpose documentation for incidental languages, credentials, serialization formats, and transport protocols unless that technology's behavior is part of the article.
 - Prefer Microsoft Learn, Microsoft Tech Community, official Microsoft product pages, and Microsoft-owned source repositories.
-- Use other publishers' primary sources when they own the relevant technology or specification, such as TypeScript, OpenAI APIs, or industry schemas.
+- Use other publishers' primary sources when they own a relevant technology or specification central to the article, such as OpenAI APIs or industry schemas.
 - Use descriptive Markdown link text that identifies the document and publisher or product.
 - Do not cite a source that was not consulted.
 - Avoid duplicate entries and bare URLs.
@@ -147,6 +147,7 @@ Inline links make the implementation readable in context; the References section
 
 - The frontmatter description becomes the article caption.
 - Categories populate the home, Patterns, and Anti-Patterns indexes.
+- Categories populate the left navigation, with non-empty Patterns and Anti-Patterns groups beneath each category.
 - Material for MkDocs turns tags into links and builds the Tags page.
 - Related IDs become links in a generated Related section.
 - Required metadata and section order are build validated.
