@@ -1,0 +1,12 @@
+name: agent-design-patterns
+version: 0.1.0
+description: Authoring skills for the Agent Design Patterns catalog.
+author: Microsoft
+license: MIT
+targets:
+  - copilot
+dependencies:
+  apm: []
+  mcp: []
+includes: auto
+scripts: {}

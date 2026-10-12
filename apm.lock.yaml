@@ -1,0 +1,124 @@
+lockfile_version: '1'
+dependencies: []
+deployments:
+- kind: project-relative
+  target: copilot
+  value: .github/instructions/article-standards.instructions.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:fe94cc49c366b0180fee10af52e98b2ba8a0f5830ff8e3a57a1ffa6881aa8d7d
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/author-agent-design-article
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/author-agent-design-article/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:b3da01911069486551e0f549c1499880214a5f086b45ce1064dda8ab32d5f45f
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/author-agent-design-article/assets/anti-pattern-template.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:f7b5cb7b3c1a07ae6202c90023553bf2c54039d3111b7df2faf43041d68cf6e8
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/author-agent-design-article/assets/pattern-template.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:8e043b3586ea737e55e8e8016271730c70b2555aeb8397cde4dd1c29791c480e
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/author-agent-design-article/references/article-standard.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:27ade226def347c08546bfb5b494c833cf25dc020bee595e35c71f22509847c4
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/author-article
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/author-article/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:dfe7c5e47cb5925fa6db916909580ae7fdc4624221dfca7e9f14271c68fd25ff
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/author-article/assets/anti-pattern-template.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:f7b5cb7b3c1a07ae6202c90023553bf2c54039d3111b7df2faf43041d68cf6e8
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/author-article/assets/pattern-template.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:8e043b3586ea737e55e8e8016271730c70b2555aeb8397cde4dd1c29791c480e
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/author-article/references/article-standard.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:27ade226def347c08546bfb5b494c833cf25dc020bee595e35c71f22509847c4
+local_deployed_files:
+- .agents/skills/author-agent-design-article
+- .agents/skills/author-agent-design-article/SKILL.md
+- .agents/skills/author-agent-design-article/assets/anti-pattern-template.md
+- .agents/skills/author-agent-design-article/assets/pattern-template.md
+- .agents/skills/author-agent-design-article/references/article-standard.md
+- .agents/skills/author-article
+- .agents/skills/author-article/SKILL.md
+- .agents/skills/author-article/assets/anti-pattern-template.md
+- .agents/skills/author-article/assets/pattern-template.md
+- .agents/skills/author-article/references/article-standard.md
+- .github/instructions/article-standards.instructions.md
+local_deployed_file_hashes:
+  .agents/skills/author-agent-design-article/SKILL.md: sha256:b3da01911069486551e0f549c1499880214a5f086b45ce1064dda8ab32d5f45f
+  .agents/skills/author-agent-design-article/assets/anti-pattern-template.md: sha256:f7b5cb7b3c1a07ae6202c90023553bf2c54039d3111b7df2faf43041d68cf6e8
+  .agents/skills/author-agent-design-article/assets/pattern-template.md: sha256:8e043b3586ea737e55e8e8016271730c70b2555aeb8397cde4dd1c29791c480e
+  .agents/skills/author-agent-design-article/references/article-standard.md: sha256:27ade226def347c08546bfb5b494c833cf25dc020bee595e35c71f22509847c4
+  .agents/skills/author-article/SKILL.md: sha256:dfe7c5e47cb5925fa6db916909580ae7fdc4624221dfca7e9f14271c68fd25ff
+  .agents/skills/author-article/assets/anti-pattern-template.md: sha256:f7b5cb7b3c1a07ae6202c90023553bf2c54039d3111b7df2faf43041d68cf6e8
+  .agents/skills/author-article/assets/pattern-template.md: sha256:8e043b3586ea737e55e8e8016271730c70b2555aeb8397cde4dd1c29791c480e
+  .agents/skills/author-article/references/article-standard.md: sha256:27ade226def347c08546bfb5b494c833cf25dc020bee595e35c71f22509847c4
+  .github/instructions/article-standards.instructions.md: sha256:fe94cc49c366b0180fee10af52e98b2ba8a0f5830ff8e3a57a1ffa6881aa8d7d

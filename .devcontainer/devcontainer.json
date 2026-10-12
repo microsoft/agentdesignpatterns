@@ -7,5 +7,6 @@
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.13"
     }
-  }
+  },
+  "postCreateCommand": "apm install --frozen --target copilot && if find .apm -type f \\( -name '*.instructions.md' -o -name '*.agent.md' \\) -print -quit | grep -q .; then apm compile --target copilot; fi"
 }
