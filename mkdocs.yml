@@ -1,12 +1,35 @@
 site_name: Agent Design Patterns
+site_description: Patterns and anti-patterns for building reliable AI agents.
+copyright: "Copyright © Microsoft 2026"
+
+theme:
+  name: material
+  features:
+    - navigation.indexes
+    - navigation.sections
+    - search.highlight
 
 markdown_extensions:
+  - attr_list
   - meta
+
+plugins:
+  - search
+  - tags
+
+hooks:
+  - hooks/catalog.py
+
+extra_css:
+  - stylesheets/extra.css
 
 nav:
   - Introduction: index.md
   - Patterns:
+      - Overview: patterns/index.md
       - Bounded Tool Calls: patterns/bounded-tool-calls.md
   - Anti-Patterns:
+      - Overview: anti-patterns/index.md
       - Unbounded Retries: anti-patterns/unbounded-retries.md
+  - Tags: tags.md
   - Contributing: contributing.md

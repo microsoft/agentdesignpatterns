@@ -1,0 +1,5 @@
+.article-caption {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.9rem;
+  margin-top: -0.4rem;
+}
