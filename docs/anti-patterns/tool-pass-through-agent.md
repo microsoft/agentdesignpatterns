@@ -43,7 +43,7 @@ This behavior is an anti-pattern only when the mapping is predetermined and the 
 
 ### Microsoft Foundry Prompt Agent
 
-A [Microsoft Foundry prompt agent](https://learn.microsoft.com/en-us/azure/foundry/agents/quickstarts/prompt-agent) can declare [function tools](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/function-calling). The following [Python](https://docs.python.org/3/) configuration uses the [Azure AI Projects client library](https://learn.microsoft.com/en-us/python/api/overview/azure/ai-projects-readme) and [`DefaultAzureCredential`](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential) to create an agent that is deliberately prohibited from adding value.
+A [Microsoft Foundry prompt agent](https://learn.microsoft.com/en-us/azure/foundry/agents/quickstarts/prompt-agent) can declare [function tools](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/function-calling). The following Python configuration uses the [Azure AI Projects client library](https://learn.microsoft.com/en-us/python/api/overview/azure/ai-projects-readme) and `DefaultAzureCredential` to create an agent that is deliberately prohibited from adding value.
 
 !!! warning "Anti-pattern: Do not adopt"
 
@@ -102,7 +102,7 @@ The application hosting the conversation must still execute `get_order_status` a
 
 ### Microsoft Agent Framework Agent
 
-[Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/) supports Python function tools through the [`@tool` decorator and `Agent`](https://learn.microsoft.com/en-us/agent-framework/get-started/add-tools). This example implements the same unnecessary indirection with a [`FoundryChatClient`](https://learn.microsoft.com/en-us/agent-framework/get-started/add-tools) authenticated by [`AzureCliCredential`](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.azureclicredential).
+[Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/) supports Python function tools through the [`@tool` decorator and `Agent`](https://learn.microsoft.com/en-us/agent-framework/get-started/add-tools). This example implements the same unnecessary indirection with a [`FoundryChatClient`](https://learn.microsoft.com/en-us/agent-framework/get-started/add-tools) authenticated by `AzureCliCredential`.
 
 !!! warning "Anti-pattern: Do not adopt"
 
@@ -156,9 +156,19 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-`fetch_order_status` represents the service SDK or [HTTP](https://www.rfc-editor.org/rfc/rfc9110) call that performs the useful work. In a real pass-through agent, the model invocation surrounds this call but does not improve its inputs or output.
+`fetch_order_status` represents the service SDK or HTTP call that performs the useful work. In a real pass-through agent, the model invocation surrounds this call but does not improve its inputs or output.
 
-Replace both agents with a direct call from the caller:
+## Recommended Approach
+
+Call the known tool or service directly from the initiating component. Validate the structured input at that boundary and return the service result without introducing a model invocation or agent runtime.
+
+```mermaid
+flowchart LR
+    COMPONENT["Initiating Component"] -->|"Validated order ID"| SERVICE["Order Status Service"]
+    SERVICE -.->|"Order status"| COMPONENT
+```
+
+Replace both agents with a direct call:
 
 ```python
 print(fetch_order_status("A-1042"))
@@ -173,7 +183,3 @@ The direct path preserves a deterministic contract and removes model tokens, inf
 - [Azure AI Projects client library for Python](https://learn.microsoft.com/en-us/python/api/overview/azure/ai-projects-readme)
 - [Microsoft Agent Framework overview](https://learn.microsoft.com/en-us/agent-framework/overview/)
 - [Add tools — Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/get-started/add-tools)
-- [Python documentation](https://docs.python.org/3/)
-- [DefaultAzureCredential class — Azure Identity](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential)
-- [AzureCliCredential class — Azure Identity](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.azureclicredential)
-- [HTTP Semantics — RFC 9110](https://www.rfc-editor.org/rfc/rfc9110)
