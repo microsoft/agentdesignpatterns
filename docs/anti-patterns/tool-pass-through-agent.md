@@ -3,7 +3,7 @@ id: tool-pass-through-agent
 title: Tool Pass-Through Agent
 description: Avoid agents that only relay requests and responses between callers and tools.
 type: anti-pattern
-category: Architecture and composition
+category: Tool Calling
 tags:
   - architecture
   - cost

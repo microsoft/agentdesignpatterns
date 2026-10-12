@@ -32,7 +32,7 @@ tags:
   - reliability
   - tool-use
 related:
-  - unbounded-retries
+  - tool-call-circuit-breaker
 ---
 ```
 
