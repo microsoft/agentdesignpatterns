@@ -86,7 +86,8 @@ After the level-one title, use exactly these level-two sections in order:
 1. `Anti-Pattern`
 2. `Issue`
 3. `Implementation`
-4. `References`
+4. `Recommended Approach`
+5. `References`
 
 ### Anti-Pattern
 
@@ -98,11 +99,15 @@ Explain why the behavior is harmful. Cover concrete reliability, cost, security,
 
 ### Implementation
 
-Show a concise example of the anti-pattern so readers can recognize it. State immediately before the code that the implementation is intentionally unsafe or unreliable and must not be adopted. Explain how the example can fail in the relevant Microsoft agent stack and summarize the replacement behavior.
+Show a concise example of the anti-pattern so readers can recognize it. State immediately before the code that the implementation is intentionally unsafe or unreliable and must not be adopted. Explain how the example can fail in the relevant Microsoft agent stack. Keep corrected code and prescriptive replacement guidance in Recommended Approach.
+
+### Recommended Approach
+
+Describe the correct technical approach that replaces the anti-pattern. Include corrected code, a diagram, or both when they clarify the replacement architecture or behavior. Make the boundary explicit between deterministic application logic and work that genuinely requires an agent or model.
 
 ## Technology Links
 
-In the Implementation section, hyperlink the first meaningful mention of every named:
+In the Implementation and Recommended Approach sections, hyperlink the first meaningful mention of every named technology that is material to the article's behavior or integration:
 
 - Product or service
 - Framework or SDK
@@ -118,12 +123,16 @@ Link to the canonical product overview or reference documentation. Examples:
 
 Do not link to search results, unofficial summaries, or marketing pages when a canonical overview or reference exists.
 
+Do not add links merely because code uses a general-purpose language feature, credential class, serialization format, or transport protocol. Omit general documentation for incidental mechanics such as the implementation language, an authentication credential, JSON, or HTTP unless the article depends on behavior specific to that technology.
+
 ## References
 
-The References section is required and must be complete with respect to the Implementation section.
+The References section is required and must be complete with respect to the Implementation and Recommended Approach sections.
 
-- Include every canonical source linked from implementation prose.
+- Include every canonical source linked from implementation or recommended-approach prose.
 - Include sources for implementation APIs, SDKs, and important behavior.
+- Include only sources that materially support the article's agent behavior, architecture, or APIs central to the example.
+- Exclude general-purpose documentation for incidental languages, credentials, serialization formats, and transport protocols unless that technology's behavior is part of the article.
 - Prefer Microsoft Learn, Microsoft Tech Community, official Microsoft product pages, and Microsoft-owned source repositories.
 - Use other publishers' primary sources when they own the relevant technology or specification, such as TypeScript, OpenAI APIs, or industry schemas.
 - Use descriptive Markdown link text that identifies the document and publisher or product.
