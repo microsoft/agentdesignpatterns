@@ -14,12 +14,12 @@ from mkdocs.utils import get_relative_url
 ARTICLE_TYPES = {
     "pattern": {
         "directory": "patterns",
-        "sections": ["Description", "Applicability", "Implementation", "References"],
+        "sections": ["Pattern", "Applicability", "Implementation", "References"],
         "title": "Patterns",
     },
     "anti-pattern": {
         "directory": "anti-patterns",
-        "sections": ["Description", "Issue", "Implementation", "References"],
+        "sections": ["Anti-Pattern", "Issue", "Implementation", "References"],
         "title": "Anti-Patterns",
     },
 }

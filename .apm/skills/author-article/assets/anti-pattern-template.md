@@ -11,7 +11,7 @@ related: []
 
 # Anti-Pattern Title
 
-## Description
+## Anti-Pattern
 
 Define the undesirable behavior.
 

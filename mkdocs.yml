@@ -10,8 +10,14 @@ theme:
     - search.highlight
 
 markdown_extensions:
+  - admonition
   - attr_list
   - meta
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_div_format
 
 plugins:
   - search
@@ -22,6 +28,10 @@ hooks:
 
 extra_css:
   - stylesheets/extra.css
+
+extra_javascript:
+  - path: javascripts/mermaid.mjs
+    type: module
 
 nav:
   - Introduction: index.md

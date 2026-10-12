@@ -11,7 +11,7 @@ related: []
 
 # Pattern Title
 
-## Description
+## Pattern
 
 Define the pattern and its essential behavior.
 

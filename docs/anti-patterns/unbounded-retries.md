@@ -14,7 +14,7 @@ related:
 
 # Unbounded Retries
 
-## Description
+## Anti-Pattern
 
 An agent repeats a failed operation indefinitely without a retry limit, backoff, cancellation path, or meaningful change in strategy.
 
