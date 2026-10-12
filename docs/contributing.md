@@ -59,7 +59,7 @@ Anti-patterns must contain:
 4. `Recommended Approach`
 5. `References`
 
-The site renders the frontmatter description as a caption below the article title. Do not repeat it manually. The site also generates the `Related` section, categorized catalog indexes, and tag index from frontmatter.
+The site renders the frontmatter description as a caption below the article title. Do not repeat it manually. The site also generates the `Related` section, category-first left navigation, categorized catalog indexes, and tag index from frontmatter.
 
 Implementation examples should use TypeScript and Microsoft technologies where practical, including [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry) and [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/). Keep examples focused on the behavior being described and omit unrelated setup. An anti-pattern implementation must be clearly identified as an example that readers should not adopt. Put corrected code and prescriptive replacement guidance in Recommended Approach.
 

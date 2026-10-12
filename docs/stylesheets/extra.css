@@ -8,3 +8,58 @@
 .md-typeset .media-caption {
   text-align: center;
 }
+
+.md-nav--primary
+  > .md-nav__list
+  > .md-nav__item--section
+  > .md-nav__link {
+  color: var(--md-accent-fg-color);
+  font-weight: 700;
+}
+
+.catalog-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3rem;
+  margin-bottom: 2.5rem;
+}
+
+.catalog-category-column {
+  padding: 0.25rem 0 1rem;
+}
+
+.md-typeset .catalog-category-column > h3 {
+  margin: 0 0 0.6rem;
+}
+
+.md-typeset .catalog-article-list {
+  margin: 0;
+  padding-left: 0.5rem;
+  list-style: disc;
+  list-style-position: outside;
+}
+
+.md-typeset .catalog-article-list > li {
+  margin: 0;
+}
+
+.md-typeset .catalog-article-list > li + li {
+  margin-top: 1rem;
+}
+
+.md-typeset .catalog-article-list a {
+  font-weight: 600;
+}
+
+.md-typeset .catalog-article-list p,
+.md-typeset .catalog-empty {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--md-default-fg-color--light);
+}
+
+@media screen and (max-width: 44.9844em) {
+  .catalog-category-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
