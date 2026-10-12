@@ -54,12 +54,12 @@ The site hook validates this metadata, groups index pages by category, renders t
 
 After the level-one title, use exactly these level-two sections in order:
 
-1. `Description`
+1. `Pattern`
 2. `Applicability`
 3. `Implementation`
 4. `References`
 
-### Description
+### Pattern
 
 Define the pattern and its essential behavior. State what the implementation must do, not merely its intended outcome.
 
@@ -83,12 +83,12 @@ Use real, current APIs when presenting code as directly usable. If exact framewo
 
 After the level-one title, use exactly these level-two sections in order:
 
-1. `Description`
+1. `Anti-Pattern`
 2. `Issue`
 3. `Implementation`
 4. `References`
 
-### Description
+### Anti-Pattern
 
 Define the undesirable behavior without prescribing the solution.
 

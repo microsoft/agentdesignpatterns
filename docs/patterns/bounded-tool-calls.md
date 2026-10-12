@@ -14,7 +14,7 @@ related:
 
 # Bounded Tool Calls
 
-## Description
+## Pattern
 
 Set an explicit maximum number of tool calls for each agent run. Count every attempted call, including calls that fail, and stop before invoking a tool when the budget is exhausted.
 

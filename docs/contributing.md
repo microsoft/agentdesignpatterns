@@ -46,14 +46,14 @@ related: []
 
 After the title, patterns must contain these level-two sections in order:
 
-1. `Description`
+1. `Pattern`
 2. `Applicability`
 3. `Implementation`
 4. `References`
 
 Anti-patterns must contain:
 
-1. `Description`
+1. `Anti-Pattern`
 2. `Issue`
 3. `Implementation`
 4. `References`
