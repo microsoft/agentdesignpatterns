@@ -98,7 +98,7 @@ The application hosting the conversation must still execute `get_order_status` a
 
 ![Microsoft Foundry configuration for the antipattern-tool-pass-through prompt agent, showing instructions that require every request to call the get_order_status tool.](../assets/images/anti-patterns/tool-pass-through-agent/foundry_prompt_agent_configuration.png)
 
-*The prompt agent is configured to call one predetermined tool and return its output without additional reasoning or synthesis.*
+<p class="media-caption"><em>The prompt agent is configured to call one predetermined tool and return its output without additional reasoning or synthesis.</em></p>
 
 ### Microsoft Agent Framework Agent
 
