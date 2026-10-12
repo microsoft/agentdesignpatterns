@@ -1,0 +1,33 @@
+name: Catalog or site problem
+description: Report incorrect content, broken navigation, or a publishing problem.
+title: "[Problem] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe what is incorrect or not working.
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: Link the affected page, article, workflow run, or file.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: Describe what should happen instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include screenshots, logs without secrets, or other useful details.

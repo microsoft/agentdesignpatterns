@@ -6,4 +6,4 @@ __pycache__/
 apm_modules/
 .agents/
 .github/copilot-instructions.md
-.github/instructions/article-standards.instructions.md
+.github/instructions/

@@ -1,0 +1,45 @@
+name: Catalog proposal
+description: Propose a pattern or anti-pattern for the catalog.
+title: "[Proposal] "
+body:
+  - type: dropdown
+    id: article-type
+    attributes:
+      label: Article type
+      options:
+        - Pattern
+        - Anti-pattern
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Behavior
+      description: Define the agent behavior that the article should describe.
+    validations:
+      required: true
+
+  - type: textarea
+    id: applicability
+    attributes:
+      label: Applicability or impact
+      description: Explain when the behavior applies or why it is harmful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation direction and sources
+      description: Suggest a Microsoft-stack implementation and link relevant primary documentation.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Proposal checks
+      options:
+        - label: I searched the existing catalog and did not find an equivalent article.
+          required: true
