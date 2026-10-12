@@ -214,7 +214,7 @@ def _render_category_index(page: Page, files: Files) -> str:
                 sections.append('<ul class="catalog-article-list">')
                 for article in articles:
                     target = files.get_file_from_path(article["src_uri"])
-                    url = get_relative_url(target.src_uri, page.file.src_uri)
+                    url = get_relative_url(target.url, page.url)
                     sections.append(
                         "<li>"
                         f'<a href="{html.escape(url, quote=True)}">'
