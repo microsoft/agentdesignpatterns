@@ -61,7 +61,34 @@ Anti-patterns must contain:
 
 The site renders the frontmatter description as a caption below the article title. Do not repeat it manually. The site also generates the `Related` section, category-first left navigation, categorized catalog indexes, and tag index from frontmatter.
 
-Implementation examples should use TypeScript and Microsoft technologies where practical, including [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry) and [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/). Keep examples focused on the behavior being described and omit unrelated setup. An anti-pattern implementation must be clearly identified as an example that readers should not adopt. Put corrected code and prescriptive replacement guidance in Recommended Approach.
+Implementation examples should use Python and TypeScript with Microsoft technologies where practical, including [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry) and [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/). Keep examples focused on the behavior being described and omit unrelated setup. An anti-pattern implementation must be clearly identified as an example that readers should not adopt. Put corrected code and prescriptive replacement guidance in Recommended Approach.
+
+## Language-Specific Samples
+
+Every executable sample must provide equivalent Python and TypeScript implementations without duplicating the surrounding explanation. Put each pair in linked content tabs, with Python first:
+
+````markdown
+=== "Python"
+
+    ```python
+    def example() -> None:
+        ...
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    function example(): void {
+      // ...
+    }
+    ```
+````
+
+Use the labels and fence identifiers exactly as shown. The strict build rejects a Python or TypeScript fence outside a paired group, reversed or duplicate tabs, mismatched labels and fence identifiers, unsupported language identifiers, malformed indentation, and missing translations.
+
+The site initially displays Python. Selecting either language on any sample updates every sample on the page and stores the preference in browser-local storage, so the same language remains selected across articles and later sessions.
+
+Mermaid diagrams and supporting configuration or policy fragments such as YAML, Rego, and shell commands remain ordinary fenced blocks without language tabs. If an executable translation is temporarily unavailable, do not silently show another language under the selected label. Add an explicit prose explanation and complete the missing implementation before submitting the article.
 
 In Implementation and Recommended Approach, hyperlink technologies that materially support the agent behavior, architecture, or APIs central to the example. The References section must also contain each of those sources, even when the same link appears inline.
 

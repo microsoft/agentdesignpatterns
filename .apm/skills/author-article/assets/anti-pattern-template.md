@@ -23,6 +23,18 @@ Explain why the behavior causes concrete problems.
 
 State that the example is intentionally unsafe or unreliable and must not be adopted. Show a concise example and explain how it fails. Keep corrected code and prescriptive replacement guidance out of this section.
 
+=== "Python"
+
+    ```python
+    # Intentionally unsafe Python implementation
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    // Intentionally unsafe TypeScript implementation
+    ```
+
 ## Recommended Approach
 
 Describe the correct replacement behavior. Include corrected code, a diagram, or both when useful. Link only technologies that materially support the agent behavior, architecture, or central APIs; omit general-purpose references for incidental implementation mechanics.

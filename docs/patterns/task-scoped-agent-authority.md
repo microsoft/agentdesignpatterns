@@ -56,215 +56,476 @@ First, connect the agent to [Microsoft Agent 365](https://learn.microsoft.com/en
 
 The application loads the registered identity into an agent record. `allowedTaskKinds` is the agent's maximum capability boundary; it is narrower than all capabilities available to the hosting project.
 
-```typescript
-type TaskKind = "case-review" | "refund-review";
-type ToolName =
-  | "get_case"
-  | "get_payment"
-  | "draft_response"
-  | "request_refund";
+=== "Python"
 
-interface AgentRecord {
-  agentIdentityId: string;
-  displayName: string;
-  allowedTaskKinds: ReadonlySet<TaskKind>;
-}
+    ```python
+    from dataclasses import dataclass
+    from datetime import datetime, timezone
+    from typing import Literal
 
-interface TaskAuthority {
-  authorityId: string;
-  agentIdentityId: string;
-  actorId: string;
-  tenantId: string;
-  taskKind: TaskKind;
-  caseId: string;
-  tools: ReadonlySet<ToolName>;
-  expiresAt: Date;
-}
+    TaskKind = Literal["case-review", "refund-review"]
+    ToolName = Literal[
+        "get_case",
+        "get_payment",
+        "draft_response",
+        "request_refund",
+    ]
 
-interface ResolvedTask {
-  authorityId: string;
-  actorId: string;
-  tenantId: string;
-  taskKind: TaskKind;
-  caseId: string;
-  expiresAt: Date;
-}
 
-const toolsByTask: Record<TaskKind, readonly ToolName[]> = {
-  "case-review": ["get_case", "draft_response"],
-  "refund-review": [
-    "get_case",
-    "get_payment",
-    "draft_response",
-    "request_refund",
-  ],
-};
+    @dataclass(frozen=True)
+    class AgentRecord:
+        agent_identity_id: str
+        display_name: str
+        allowed_task_kinds: frozenset[TaskKind]
 
-function createAuthority(
-  agent: AgentRecord,
-  task: ResolvedTask,
-): TaskAuthority {
-  if (!agent.allowedTaskKinds.has(task.taskKind)) {
-    throw new Error("This agent is not authorized for the task kind.");
-  }
-  if (task.expiresAt.getTime() <= Date.now()) {
-    throw new Error("Task authority has already expired.");
-  }
 
-  return {
-    ...task,
-    agentIdentityId: agent.agentIdentityId,
-    tools: new Set(toolsByTask[task.taskKind]),
-  };
-}
-```
+    @dataclass(frozen=True)
+    class TaskAuthority:
+        authority_id: str
+        agent_identity_id: str
+        actor_id: str
+        tenant_id: str
+        task_kind: TaskKind
+        case_id: str
+        tools: frozenset[ToolName]
+        expires_at: datetime
+
+
+    @dataclass(frozen=True)
+    class ResolvedTask:
+        authority_id: str
+        actor_id: str
+        tenant_id: str
+        task_kind: TaskKind
+        case_id: str
+        expires_at: datetime
+
+
+    tools_by_task: dict[TaskKind, tuple[ToolName, ...]] = {
+        "case-review": ("get_case", "draft_response"),
+        "refund-review": (
+            "get_case",
+            "get_payment",
+            "draft_response",
+            "request_refund",
+        ),
+    }
+
+
+    def create_authority(
+        agent: AgentRecord,
+        task: ResolvedTask,
+    ) -> TaskAuthority:
+        if task.task_kind not in agent.allowed_task_kinds:
+            raise PermissionError(
+                "This agent is not authorized for the task kind."
+            )
+        if task.expires_at <= datetime.now(timezone.utc):
+            raise PermissionError("Task authority has already expired.")
+
+        return TaskAuthority(
+            authority_id=task.authority_id,
+            agent_identity_id=agent.agent_identity_id,
+            actor_id=task.actor_id,
+            tenant_id=task.tenant_id,
+            task_kind=task.task_kind,
+            case_id=task.case_id,
+            tools=frozenset(tools_by_task[task.task_kind]),
+            expires_at=task.expires_at,
+        )
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    type TaskKind = "case-review" | "refund-review";
+    type ToolName =
+      | "get_case"
+      | "get_payment"
+      | "draft_response"
+      | "request_refund";
+
+    interface AgentRecord {
+      agentIdentityId: string;
+      displayName: string;
+      allowedTaskKinds: ReadonlySet<TaskKind>;
+    }
+
+    interface TaskAuthority {
+      authorityId: string;
+      agentIdentityId: string;
+      actorId: string;
+      tenantId: string;
+      taskKind: TaskKind;
+      caseId: string;
+      tools: ReadonlySet<ToolName>;
+      expiresAt: Date;
+    }
+
+    interface ResolvedTask {
+      authorityId: string;
+      actorId: string;
+      tenantId: string;
+      taskKind: TaskKind;
+      caseId: string;
+      expiresAt: Date;
+    }
+
+    const toolsByTask: Record<TaskKind, readonly ToolName[]> = {
+      "case-review": ["get_case", "draft_response"],
+      "refund-review": [
+        "get_case",
+        "get_payment",
+        "draft_response",
+        "request_refund",
+      ],
+    };
+
+    function createAuthority(
+      agent: AgentRecord,
+      task: ResolvedTask,
+    ): TaskAuthority {
+      if (!agent.allowedTaskKinds.has(task.taskKind)) {
+        throw new Error("This agent is not authorized for the task kind.");
+      }
+      if (task.expiresAt.getTime() <= Date.now()) {
+        throw new Error("Task authority has already expired.");
+      }
+
+      return {
+        ...task,
+        agentIdentityId: agent.agentIdentityId,
+        tools: new Set(toolsByTask[task.taskKind]),
+      };
+    }
+    ```
 
 Every registered tool remains behind a runtime authorization wrapper. Filtering the registry helps the model select only relevant tools, while the wrapper provides the enforceable boundary:
 
-```typescript
-interface AgentTool {
-  name: ToolName;
-  invoke(
-    args: unknown,
-    authority: TaskAuthority,
-  ): Promise<unknown>;
-}
+=== "Python"
 
-function buildScopedTools(
-  authority: TaskAuthority,
-  allTools: ReadonlyMap<ToolName, AgentTool>,
-): AgentTool[] {
-  return [...authority.tools].map((name) => {
-    const tool = allTools.get(name);
-    if (!tool) {
-      throw new Error(`Required tool is not registered: ${name}`);
+    ```python
+    from datetime import datetime, timezone
+    from typing import Protocol
+
+
+    class AgentTool(Protocol):
+        name: ToolName
+
+        async def invoke(
+            self,
+            args: object,
+            authority: TaskAuthority,
+        ) -> object: ...
+
+
+    class ScopedAgentTool:
+        def __init__(
+            self,
+            name: ToolName,
+            tool: AgentTool,
+            authority: TaskAuthority,
+        ) -> None:
+            self.name = name
+            self._tool = tool
+            self._authority = authority
+
+        async def invoke(self, args: object) -> object:
+            if self._authority.expires_at <= datetime.now(timezone.utc):
+                raise PermissionError("Task authority has expired.")
+
+            await tool_policy.assert_allowed(
+                authority=self._authority,
+                tool_name=self.name,
+                arguments=args,
+            )
+
+            return await self._tool.invoke(args, self._authority)
+
+
+    def build_scoped_tools(
+        authority: TaskAuthority,
+        all_tools: dict[ToolName, AgentTool],
+    ) -> list[ScopedAgentTool]:
+        scoped_tools: list[ScopedAgentTool] = []
+        for name in authority.tools:
+            tool = all_tools.get(name)
+            if tool is None:
+                raise RuntimeError(
+                    f"Required tool is not registered: {name}"
+                )
+            scoped_tools.append(ScopedAgentTool(name, tool, authority))
+
+        return scoped_tools
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    interface AgentTool {
+      name: ToolName;
+      invoke(
+        args: unknown,
+        authority: TaskAuthority,
+      ): Promise<unknown>;
     }
 
-    return {
-      name,
-      invoke: async (args: unknown): Promise<unknown> => {
-        if (authority.expiresAt.getTime() <= Date.now()) {
-          throw new Error("Task authority has expired.");
+    function buildScopedTools(
+      authority: TaskAuthority,
+      allTools: ReadonlyMap<ToolName, AgentTool>,
+    ): AgentTool[] {
+      return [...authority.tools].map((name) => {
+        const tool = allTools.get(name);
+        if (!tool) {
+          throw new Error(`Required tool is not registered: ${name}`);
         }
 
-        await toolPolicy.assertAllowed({
-          authority,
-          toolName: name,
-          arguments: args,
-        });
+        return {
+          name,
+          invoke: async (args: unknown): Promise<unknown> => {
+            if (authority.expiresAt.getTime() <= Date.now()) {
+              throw new Error("Task authority has expired.");
+            }
 
-        return tool.invoke(args, authority);
-      },
-    };
-  });
-}
-```
+            await toolPolicy.assertAllowed({
+              authority,
+              toolName: name,
+              arguments: args,
+            });
+
+            return tool.invoke(args, authority);
+          },
+        };
+      });
+    }
+    ```
 
 The [Agent 365 Notifications module](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/notification) and Microsoft 365 Agents SDK expose installation and lifecycle activities. The host can use an installation `add` event to send an [Adaptive Card](https://learn.microsoft.com/en-us/microsoft-365/agents-sdk/adaptive-cards) that makes the new agent's baseline authority visible. The card deliberately reports that no task tools are active yet:
 
-```typescript
-import {
-  ActivityTypes,
-  type Activity,
-} from "@microsoft/agents-activity";
-import {
-  AgentApplication,
-  MemoryStorage,
-  type TurnContext,
-  type TurnState,
-} from "@microsoft/agents-hosting";
+=== "Python"
 
-function creationCard(agent: AgentRecord): Activity {
-  return {
-    type: ActivityTypes.Message,
-    attachments: [{
-      contentType: "application/vnd.microsoft.card.adaptive",
-      content: {
-        type: "AdaptiveCard",
-        version: "1.5",
-        body: [
-          {
-            type: "TextBlock",
-            text: `${agent.displayName} is registered`,
-            weight: "Bolder",
-            size: "Medium",
-          },
-          {
-            type: "FactSet",
-            facts: [
+    ```python
+    from typing import Any
+
+
+    def creation_card(agent: AgentRecord) -> dict[str, Any]:
+        return {
+            "type": "message",
+            "attachments": [{
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "content": {
+                    "type": "AdaptiveCard",
+                    "version": "1.5",
+                    "body": [
+                        {
+                            "type": "TextBlock",
+                            "text": f"{agent.display_name} is registered",
+                            "weight": "Bolder",
+                            "size": "Medium",
+                        },
+                        {
+                            "type": "FactSet",
+                            "facts": [
+                                {
+                                    "title": "Agent identity",
+                                    "value": agent.agent_identity_id,
+                                },
+                                {
+                                    "title": "Allowed task kinds",
+                                    "value": ", ".join(
+                                        sorted(agent.allowed_task_kinds)
+                                    ),
+                                },
+                                {
+                                    "title": "Active task tools",
+                                    "value": (
+                                        "None until a task authority is issued"
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                },
+            }],
+        }
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    import {
+      ActivityTypes,
+      type Activity,
+    } from "@microsoft/agents-activity";
+    import {
+      AgentApplication,
+      MemoryStorage,
+      type TurnContext,
+      type TurnState,
+    } from "@microsoft/agents-hosting";
+
+    function creationCard(agent: AgentRecord): Activity {
+      return {
+        type: ActivityTypes.Message,
+        attachments: [{
+          contentType: "application/vnd.microsoft.card.adaptive",
+          content: {
+            type: "AdaptiveCard",
+            version: "1.5",
+            body: [
               {
-                title: "Agent identity",
-                value: agent.agentIdentityId,
+                type: "TextBlock",
+                text: `${agent.displayName} is registered`,
+                weight: "Bolder",
+                size: "Medium",
               },
               {
-                title: "Allowed task kinds",
-                value: [...agent.allowedTaskKinds].join(", "),
-              },
-              {
-                title: "Active task tools",
-                value: "None until a task authority is issued",
+                type: "FactSet",
+                facts: [
+                  {
+                    title: "Agent identity",
+                    value: agent.agentIdentityId,
+                  },
+                  {
+                    title: "Allowed task kinds",
+                    value: [...agent.allowedTaskKinds].join(", "),
+                  },
+                  {
+                    title: "Active task tools",
+                    value: "None until a task authority is issued",
+                  },
+                ],
               },
             ],
           },
-        ],
-      },
-    }],
-  };
-}
-```
+        }],
+      };
+    }
+    ```
 
 The same host resolves each incoming request from authenticated application state, creates the task authority, and constructs the model-facing tool registry only for that run:
 
-```typescript
-class ScopedSupportAgent extends AgentApplication<TurnState> {
-  constructor(
-    private readonly agentRecord: AgentRecord,
-    private readonly taskResolver: TaskResolver,
-    private readonly toolRegistry: ReadonlyMap<ToolName, AgentTool>,
-    private readonly agentFactory: AgentFactory,
-  ) {
-    super({
-      storage: new MemoryStorage(),
-      authorization: {
-        agentic: { type: "agentic" },
-      },
-    });
+=== "Python"
 
-    this.onActivity(
-      ActivityTypes.InstallationUpdate,
-      async (context) => this.handleInstallation(context),
-    );
-    this.onActivity(
-      ActivityTypes.Message,
-      async (context) => this.handleMessage(context),
-    );
-  }
+    ```python
+    from collections.abc import Awaitable, Callable
+    from typing import Protocol
 
-  private async handleInstallation(
-    context: TurnContext,
-  ): Promise<void> {
-    if (context.activity.action === "add") {
-      await context.sendActivity(creationCard(this.agentRecord));
+
+    class TurnContext(Protocol):
+        activity: object
+
+        async def send_activity(self, activity: object) -> None: ...
+
+
+    class ActivityHost(Protocol):
+        def on_activity(
+            self,
+            activity_type: str,
+            handler: Callable[[TurnContext], Awaitable[None]],
+        ) -> None: ...
+
+
+    class ScopedSupportAgent:
+        def __init__(
+            self,
+            host: ActivityHost,
+            agent_record: AgentRecord,
+            task_resolver,
+            tool_registry: dict[ToolName, AgentTool],
+            agent_factory,
+        ) -> None:
+            self.agent_record = agent_record
+            self.task_resolver = task_resolver
+            self.tool_registry = tool_registry
+            self.agent_factory = agent_factory
+            host.on_activity(
+                "installationUpdate",
+                self.handle_installation,
+            )
+            host.on_activity("message", self.handle_message)
+
+        async def handle_installation(
+            self,
+            context: TurnContext,
+        ) -> None:
+            if context.activity.action == "add":
+                await context.send_activity(
+                    creation_card(self.agent_record)
+                )
+
+        async def handle_message(
+            self,
+            context: TurnContext,
+        ) -> None:
+            task = await self.task_resolver.resolve(context)
+            authority = create_authority(self.agent_record, task)
+            tools = build_scoped_tools(
+                authority,
+                self.tool_registry,
+            )
+
+            worker = self.agent_factory.create(
+                agent_identity_id=authority.agent_identity_id,
+                tools=tools,
+            )
+
+            result = await worker.run(context.activity.text or "")
+            await context.send_activity(result.text)
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    class ScopedSupportAgent extends AgentApplication<TurnState> {
+      constructor(
+        private readonly agentRecord: AgentRecord,
+        private readonly taskResolver: TaskResolver,
+        private readonly toolRegistry: ReadonlyMap<ToolName, AgentTool>,
+        private readonly agentFactory: AgentFactory,
+      ) {
+        super({
+          storage: new MemoryStorage(),
+          authorization: {
+            agentic: { type: "agentic" },
+          },
+        });
+
+        this.onActivity(
+          ActivityTypes.InstallationUpdate,
+          async (context) => this.handleInstallation(context),
+        );
+        this.onActivity(
+          ActivityTypes.Message,
+          async (context) => this.handleMessage(context),
+        );
+      }
+
+      private async handleInstallation(
+        context: TurnContext,
+      ): Promise<void> {
+        if (context.activity.action === "add") {
+          await context.sendActivity(creationCard(this.agentRecord));
+        }
+      }
+
+      private async handleMessage(
+        context: TurnContext,
+      ): Promise<void> {
+        const task = await this.taskResolver.resolve(context);
+        const authority = createAuthority(this.agentRecord, task);
+        const tools = buildScopedTools(authority, this.toolRegistry);
+
+        const worker = this.agentFactory.create({
+          agentIdentityId: authority.agentIdentityId,
+          tools,
+        });
+
+        const result = await worker.run(context.activity.text ?? "");
+        await context.sendActivity(result.text);
+      }
     }
-  }
-
-  private async handleMessage(
-    context: TurnContext,
-  ): Promise<void> {
-    const task = await this.taskResolver.resolve(context);
-    const authority = createAuthority(this.agentRecord, task);
-    const tools = buildScopedTools(authority, this.toolRegistry);
-
-    const worker = this.agentFactory.create({
-      agentIdentityId: authority.agentIdentityId,
-      tools,
-    });
-
-    const result = await worker.run(context.activity.text ?? "");
-    await context.sendActivity(result.text);
-  }
-}
-```
+    ```
 
 `TaskResolver.resolve` must authenticate the actor and load the tenant, case, task kind, and expiry from trusted application state. It must not accept those authority fields from model-generated arguments. `AgentFactory` can create a [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/) agent or another model runtime, but it receives only the scoped tools and the registered agent identity.
 

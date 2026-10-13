@@ -73,11 +73,29 @@ Show how to implement the pattern. Use a Microsoft technology stack where practi
 
 - Microsoft Foundry and Foundry agents
 - Microsoft Agent Framework
-- TypeScript
+- Python and TypeScript
 - Azure services and official Microsoft SDKs
 - Other Microsoft-native technologies appropriate to the pattern
 
-Use real, current APIs when presenting code as directly usable. If exact framework integration would obscure the behavior, a focused TypeScript abstraction is acceptable, but describe clearly how it connects to the Microsoft stack. Do not imply that illustrative code is a complete production implementation.
+Use real, current APIs when presenting code as directly usable. If exact framework integration would obscure the behavior, a focused abstraction is acceptable, but describe clearly how it connects to the Microsoft stack. Do not imply that illustrative code is a complete production implementation.
+
+Every executable sample must provide equivalent Python and TypeScript implementations in a linked content-tab group. Use exactly this order, labels, and fence identifiers:
+
+````markdown
+=== "Python"
+
+    ```python
+    # Python implementation
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    // TypeScript implementation
+    ```
+````
+
+Do not place Python or TypeScript fences outside a paired language group. Keep Mermaid, YAML, Rego, shell, and other supporting non-executable fragments outside language tabs. Both implementations must demonstrate the same behavior, limits, error handling, and production boundary.
 
 When a level-two section contains level-three subsections, put all of that section's content inside level-three subsections. Do not leave introductory or shared prose loose before peer subsections. Use `### Introduction` for background that applies to multiple subsections, then give each alternative or implementation strategy its own peer subsection.
 
@@ -148,6 +166,7 @@ Inline links make the implementation readable in context; the References section
 - The frontmatter description becomes the article caption.
 - Categories populate the home, Patterns, and Anti-Patterns indexes.
 - Categories populate the left navigation, with non-empty Patterns and Anti-Patterns groups beneath each category.
+- Python and TypeScript sample pairs are build validated for exact labels, order, indentation, and completeness.
 - Material for MkDocs turns tags into links and builds the Tags page.
 - Related IDs become links in a generated Related section.
 - Required metadata and section order are build validated.

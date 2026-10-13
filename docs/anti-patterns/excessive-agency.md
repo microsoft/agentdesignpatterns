@@ -50,27 +50,53 @@ Static prompt restrictions do not reduce actual authority. Instructions such as 
 
     This implementation exposes unrelated capabilities and relies on the model to stay within task scope.
 
-```typescript
-const adminCredential = loadLongLivedAdminCredential();
+=== "Python"
 
-const allTools = [
-  createCustomerLookupTool(adminCredential),
-  createTenantExportTool(adminCredential),
-  createRefundTool(adminCredential),
-  createProductionDeploymentTool(adminCredential),
-  createRoleAssignmentTool(adminCredential),
-];
+    ```python
+    admin_credential = load_long_lived_admin_credential()
 
-const agent = createAgent({
-  instructions: `
-    Help with customer support.
-    Only use powerful tools when absolutely necessary.
-  `,
-  tools: allTools,
-});
+    all_tools = [
+        create_customer_lookup_tool(admin_credential),
+        create_tenant_export_tool(admin_credential),
+        create_refund_tool(admin_credential),
+        create_production_deployment_tool(admin_credential),
+        create_role_assignment_tool(admin_credential),
+    ]
 
-await agent.run(userRequest);
-```
+    agent = create_agent(
+        instructions=(
+            "Help with customer support. "
+            "Only use powerful tools when absolutely necessary."
+        ),
+        tools=all_tools,
+    )
+
+    await agent.run(user_request)
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    const adminCredential = loadLongLivedAdminCredential();
+
+    const allTools = [
+      createCustomerLookupTool(adminCredential),
+      createTenantExportTool(adminCredential),
+      createRefundTool(adminCredential),
+      createProductionDeploymentTool(adminCredential),
+      createRoleAssignmentTool(adminCredential),
+    ];
+
+    const agent = createAgent({
+      instructions: `
+        Help with customer support.
+        Only use powerful tools when absolutely necessary.
+      `,
+      tools: allTools,
+    });
+
+    await agent.run(userRequest);
+    ```
 
 The prompt does not constrain the credential, tenant, resource, amount, environment, or duration. A newly added tool silently expands every run's authority.
 
@@ -78,26 +104,53 @@ The prompt does not constrain the credential, tenant, resource, amount, environm
 
 Adopt [Task-Scoped Agent Authority](../patterns/task-scoped-agent-authority.md). Construct a closed authority envelope from authenticated task data, register only the required tools, acquire narrowly scoped and short-lived credentials, and authorize every invocation against the initiating actor.
 
-```typescript
-const authority = await authorityPolicy.create({
-  actorId: authenticatedUser.id,
-  tenantId: authenticatedUser.tenantId,
-  taskKind: "case-review",
-  caseId: request.caseId,
-  expiresAt: new Date(Date.now() + 15 * 60_000),
-});
+=== "Python"
 
-const tools = buildScopedTools(authority, toolRegistry);
-const credential = await tokenBroker.acquire({
-  agentIdentityId: authority.agentIdentityId,
-  audience: "customer-case-api",
-  scopes: ["case.read", "response.draft"],
-  expiresAt: authority.expiresAt,
-});
+    ```python
+    from datetime import UTC, datetime, timedelta
 
-const agent = createAgent({ tools, credential });
-await agent.run(request.prompt);
-```
+    authority = await authority_policy.create(
+        actor_id=authenticated_user.id,
+        tenant_id=authenticated_user.tenant_id,
+        task_kind="case-review",
+        case_id=request.case_id,
+        expires_at=datetime.now(UTC) + timedelta(minutes=15),
+    )
+
+    tools = build_scoped_tools(authority, tool_registry)
+    credential = await token_broker.acquire(
+        agent_identity_id=authority.agent_identity_id,
+        audience="customer-case-api",
+        scopes=["case.read", "response.draft"],
+        expires_at=authority.expires_at,
+    )
+
+    agent = create_agent(tools=tools, credential=credential)
+    await agent.run(request.prompt)
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    const authority = await authorityPolicy.create({
+      actorId: authenticatedUser.id,
+      tenantId: authenticatedUser.tenantId,
+      taskKind: "case-review",
+      caseId: request.caseId,
+      expiresAt: new Date(Date.now() + 15 * 60_000),
+    });
+
+    const tools = buildScopedTools(authority, toolRegistry);
+    const credential = await tokenBroker.acquire({
+      agentIdentityId: authority.agentIdentityId,
+      audience: "customer-case-api",
+      scopes: ["case.read", "response.draft"],
+      expiresAt: authority.expiresAt,
+    });
+
+    const agent = createAgent({ tools, credential });
+    await agent.run(request.prompt);
+    ```
 
 Use an independently attributable identity for each logical agent whose permissions or lifecycle must be governed separately. Viable approaches include:
 

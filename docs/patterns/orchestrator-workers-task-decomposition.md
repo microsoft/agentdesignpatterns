@@ -54,58 +54,121 @@ Avoid this pattern for small tasks, fixed pipelines, and deterministic routing. 
 
 [Microsoft Agent Framework Magentic orchestration](https://learn.microsoft.com/en-us/agent-framework/workflows/orchestrations/magentic) provides a manager that plans work, delegates to participants, tracks progress, and replans when stalled. The following example creates separate research and analysis workers and applies explicit coordination limits:
 
-```python
-import os
+=== "Python"
 
-from agent_framework import Agent
-from agent_framework.foundry import FoundryChatClient
-from agent_framework.orchestrations import MagenticBuilder
-from azure.identity import AzureCliCredential
+    ```python
+    import os
 
-client = FoundryChatClient(
-    project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
-    model=os.environ["FOUNDRY_MODEL"],
-    credential=AzureCliCredential(),
-)
+    from agent_framework import Agent
+    from agent_framework.foundry import FoundryChatClient
+    from agent_framework.orchestrations import MagenticBuilder
+    from azure.identity import AzureCliCredential
 
-researcher = Agent(
-    name="researcher",
-    description="Finds and cites authoritative technical evidence.",
-    instructions=(
-        "Research only the assigned question. Cite primary sources and "
-        "identify evidence gaps. Do not propose implementation."
-    ),
-    client=client,
-)
+    client = FoundryChatClient(
+        project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
+        model=os.environ["FOUNDRY_MODEL"],
+        credential=AzureCliCredential(),
+    )
 
-analyst = Agent(
-    name="analyst",
-    description="Compares evidence against explicit acceptance criteria.",
-    instructions=(
-        "Analyze supplied evidence. State assumptions and return structured "
-        "findings. Do not perform new research."
-    ),
-    client=client,
-)
+    researcher = Agent(
+        name="researcher",
+        description="Finds and cites authoritative technical evidence.",
+        instructions=(
+            "Research only the assigned question. Cite primary sources and "
+            "identify evidence gaps. Do not propose implementation."
+        ),
+        client=client,
+    )
 
-manager = Agent(
-    name="manager",
-    description="Plans, delegates, and synthesizes bounded technical work.",
-    instructions=(
-        "Create only necessary subtasks. Delegate by worker capability, "
-        "track unresolved requirements, and never claim missing work passed."
-    ),
-    client=client,
-)
+    analyst = Agent(
+        name="analyst",
+        description="Compares evidence against explicit acceptance criteria.",
+        instructions=(
+            "Analyze supplied evidence. State assumptions and return structured "
+            "findings. Do not perform new research."
+        ),
+        client=client,
+    )
 
-workflow = MagenticBuilder(
-    participants=[researcher, analyst],
-    manager_agent=manager,
-    max_round_count=8,
-    max_stall_count=2,
-    max_reset_count=1,
-).build()
-```
+    manager = Agent(
+        name="manager",
+        description="Plans, delegates, and synthesizes bounded technical work.",
+        instructions=(
+            "Create only necessary subtasks. Delegate by worker capability, "
+            "track unresolved requirements, and never claim missing work passed."
+        ),
+        client=client,
+    )
+
+    workflow = MagenticBuilder(
+        participants=[researcher, analyst],
+        manager_agent=manager,
+        max_round_count=8,
+        max_stall_count=2,
+        max_reset_count=1,
+    ).build()
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    interface AgentOptions {
+      name: string;
+      description: string;
+      instructions: string;
+    }
+
+    interface Agent {
+      readonly name: string;
+    }
+
+    interface MagenticWorkflow {}
+
+    interface AgentRuntime {
+      createAgent(options: AgentOptions): Agent;
+      createMagenticWorkflow(options: {
+        participants: readonly Agent[];
+        managerAgent: Agent;
+        maxRoundCount: number;
+        maxStallCount: number;
+        maxResetCount: number;
+      }): MagenticWorkflow;
+    }
+
+    declare const runtime: AgentRuntime;
+
+    const researcher = runtime.createAgent({
+      name: "researcher",
+      description: "Finds and cites authoritative technical evidence.",
+      instructions:
+        "Research only the assigned question. Cite primary sources and " +
+        "identify evidence gaps. Do not propose implementation.",
+    });
+
+    const analyst = runtime.createAgent({
+      name: "analyst",
+      description: "Compares evidence against explicit acceptance criteria.",
+      instructions:
+        "Analyze supplied evidence. State assumptions and return structured " +
+        "findings. Do not perform new research.",
+    });
+
+    const manager = runtime.createAgent({
+      name: "manager",
+      description: "Plans, delegates, and synthesizes bounded technical work.",
+      instructions:
+        "Create only necessary subtasks. Delegate by worker capability, " +
+        "track unresolved requirements, and never claim missing work passed.",
+    });
+
+    const workflow = runtime.createMagenticWorkflow({
+      participants: [researcher, analyst],
+      managerAgent: manager,
+      maxRoundCount: 8,
+      maxStallCount: 2,
+      maxResetCount: 1,
+    });
+    ```
 
 The built-in limits constrain coordination but do not replace application-level budgets for tokens, elapsed time, tools, or spend. Validate the manager's final output against the original acceptance criteria. Preserve worker provenance so synthesis cannot erase which worker produced a claim or which source supports it.
 
