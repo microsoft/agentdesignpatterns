@@ -109,6 +109,24 @@ deployments:
   - .
   active_owner: .
   content_hash: sha256:27ade226def347c08546bfb5b494c833cf25dc020bee595e35c71f22509847c4
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/create-pull-request
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/create-pull-request/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:2ff82459e0da39b79e5750a6fbe5fe3733bb3293b53ae54c32fa786230db9b03
 local_deployed_files:
 - .agents/skills/author-agent-design-article
 - .agents/skills/author-agent-design-article/SKILL.md
@@ -120,6 +138,8 @@ local_deployed_files:
 - .agents/skills/author-article/assets/anti-pattern-template.md
 - .agents/skills/author-article/assets/pattern-template.md
 - .agents/skills/author-article/references/article-standard.md
+- .agents/skills/create-pull-request
+- .agents/skills/create-pull-request/SKILL.md
 - .github/instructions/article-standards.instructions.md
 - .github/instructions/publishing-workflow.instructions.md
 local_deployed_file_hashes:
@@ -131,5 +151,6 @@ local_deployed_file_hashes:
   .agents/skills/author-article/assets/anti-pattern-template.md: sha256:1fe64164b779e815c987b0810156e1cef7f0003aa56f74d95e58c6b4db0dba3a
   .agents/skills/author-article/assets/pattern-template.md: sha256:eba005e709a01ae79c6059e90a4180b8f70133bf4ed8a3b6e81da53c16a274ab
   .agents/skills/author-article/references/article-standard.md: sha256:27ade226def347c08546bfb5b494c833cf25dc020bee595e35c71f22509847c4
+  .agents/skills/create-pull-request/SKILL.md: sha256:2ff82459e0da39b79e5750a6fbe5fe3733bb3293b53ae54c32fa786230db9b03
   .github/instructions/article-standards.instructions.md: sha256:f167e62b72620ce3f690f5edcdf63a47ff3c91918022a7d06ee01ee767c3801e
   .github/instructions/publishing-workflow.instructions.md: sha256:7df77648f9270e12ed8f52a03da304118d5583337f6f5e63baec38fcd9c3246d
