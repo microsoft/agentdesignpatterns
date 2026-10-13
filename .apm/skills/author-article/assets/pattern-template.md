@@ -21,7 +21,19 @@ Explain when and where to apply the pattern.
 
 ## Implementation
 
-Present a focused Microsoft-stack implementation. Hyperlink technologies that materially support the pattern's behavior, architecture, or central APIs. Do not link or cite generic language documentation solely because the example uses that language.
+Present focused, equivalent Microsoft-stack implementations in Python and TypeScript. Hyperlink technologies that materially support the pattern's behavior, architecture, or central APIs. Do not link or cite generic language documentation solely because the example uses that language.
+
+=== "Python"
+
+    ```python
+    # Python implementation
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    // TypeScript implementation
+    ```
 
 ## References
 

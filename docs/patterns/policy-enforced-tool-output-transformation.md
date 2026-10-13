@@ -57,70 +57,147 @@ Field allowlisting is safer than deleting a known blocklist because newly added 
 
 A custom wrapper invokes the underlying tool, transforms its raw result, validates the safe projection, and returns only that projection to the agent.
 
-```typescript
-interface CustomerRecordToolArgs {
-  customer_id: string;
-}
+=== "Python"
 
-interface SafeCustomerRecord {
-  customer_id: string;
-  summary: string;
-}
+    ```python
+    from collections.abc import Awaitable, Callable, Mapping
+    from typing import TypedDict
 
-type RawCustomerRecordTool = (
-  args: CustomerRecordToolArgs,
-) => Promise<unknown>;
 
-type SafeCustomerRecordTool = (
-  args: CustomerRecordToolArgs,
-) => Promise<SafeCustomerRecord>;
+    class CustomerRecordToolArgs(TypedDict):
+        customer_id: str
 
-class ToolOutputPolicyError extends Error {}
 
-function sanitizeCustomerRecord(rawResult: unknown): SafeCustomerRecord {
-  if (typeof rawResult !== "object" || rawResult === null) {
-    throw new ToolOutputPolicyError("Tool result is not an object.");
-  }
+    class SafeCustomerRecord(TypedDict):
+        customer_id: str
+        summary: str
 
-  const record = rawResult as Record<string, unknown>;
-  if (
-    typeof record.customer_id !== "string" ||
-    typeof record.summary !== "string"
-  ) {
-    throw new ToolOutputPolicyError("Tool result has an invalid schema.");
-  }
 
-  return {
-    customer_id: record.customer_id,
-    summary: record.summary,
-  };
-}
+    RawCustomerRecordTool = Callable[
+        [CustomerRecordToolArgs],
+        Awaitable[object],
+    ]
+    SafeCustomerRecordTool = Callable[
+        [CustomerRecordToolArgs],
+        Awaitable[SafeCustomerRecord],
+    ]
 
-function createSanitizedCustomerRecordTool(
-  invokeRawTool: RawCustomerRecordTool,
-  audit: (reason: string) => void,
-): SafeCustomerRecordTool {
-  return async (args: CustomerRecordToolArgs): Promise<SafeCustomerRecord> => {
-    const rawResult = await invokeRawTool(args);
-    const safeResult = sanitizeCustomerRecord(rawResult);
-    audit("customer_record_allowlist_applied");
-    return safeResult;
-  };
-}
-```
+
+    class ToolOutputPolicyError(Exception):
+        pass
+
+
+    def sanitize_customer_record(raw_result: object) -> SafeCustomerRecord:
+        if not isinstance(raw_result, Mapping):
+            raise ToolOutputPolicyError("Tool result is not an object.")
+
+        customer_id = raw_result.get("customer_id")
+        summary = raw_result.get("summary")
+        if not isinstance(customer_id, str) or not isinstance(summary, str):
+            raise ToolOutputPolicyError("Tool result has an invalid schema.")
+
+        return {
+            "customer_id": customer_id,
+            "summary": summary,
+        }
+
+
+    def create_sanitized_customer_record_tool(
+        invoke_raw_tool: RawCustomerRecordTool,
+        audit: Callable[[str], None],
+    ) -> SafeCustomerRecordTool:
+        async def sanitized_tool(
+            args: CustomerRecordToolArgs,
+        ) -> SafeCustomerRecord:
+            raw_result = await invoke_raw_tool(args)
+            safe_result = sanitize_customer_record(raw_result)
+            audit("customer_record_allowlist_applied")
+            return safe_result
+
+        return sanitized_tool
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    interface CustomerRecordToolArgs {
+      customer_id: string;
+    }
+
+    interface SafeCustomerRecord {
+      customer_id: string;
+      summary: string;
+    }
+
+    type RawCustomerRecordTool = (
+      args: CustomerRecordToolArgs,
+    ) => Promise<unknown>;
+
+    type SafeCustomerRecordTool = (
+      args: CustomerRecordToolArgs,
+    ) => Promise<SafeCustomerRecord>;
+
+    class ToolOutputPolicyError extends Error {}
+
+    function sanitizeCustomerRecord(rawResult: unknown): SafeCustomerRecord {
+      if (typeof rawResult !== "object" || rawResult === null) {
+        throw new ToolOutputPolicyError("Tool result is not an object.");
+      }
+
+      const record = rawResult as Record<string, unknown>;
+      if (
+        typeof record.customer_id !== "string" ||
+        typeof record.summary !== "string"
+      ) {
+        throw new ToolOutputPolicyError("Tool result has an invalid schema.");
+      }
+
+      return {
+        customer_id: record.customer_id,
+        summary: record.summary,
+      };
+    }
+
+    function createSanitizedCustomerRecordTool(
+      invokeRawTool: RawCustomerRecordTool,
+      audit: (reason: string) => void,
+    ): SafeCustomerRecordTool {
+      return async (args: CustomerRecordToolArgs): Promise<SafeCustomerRecord> => {
+        const rawResult = await invokeRawTool(args);
+        const safeResult = sanitizeCustomerRecord(rawResult);
+        audit("customer_record_allowlist_applied");
+        return safeResult;
+      };
+    }
+    ```
 
 Expose only the wrapped tool to the agent runtime:
 
-```typescript
-const getCustomerRecordTool = createSanitizedCustomerRecordTool(
-  getCustomerRecordFromService,
-  recordTransformation,
-);
+=== "Python"
 
-const toolResult = await getCustomerRecordTool({
-  customer_id: "C-1042",
-});
-```
+    ```python
+    get_customer_record_tool = create_sanitized_customer_record_tool(
+        get_customer_record_from_service,
+        record_transformation,
+    )
+
+    tool_result = await get_customer_record_tool({
+        "customer_id": "C-1042",
+    })
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    const getCustomerRecordTool = createSanitizedCustomerRecordTool(
+      getCustomerRecordFromService,
+      recordTransformation,
+    );
+
+    const toolResult = await getCustomerRecordTool({
+      customer_id: "C-1042",
+    });
+    ```
 
 Keep `getCustomerRecordFromService` inaccessible to the agent-facing tool registry so no alternate path can return the raw object. If sanitation throws, report a failed tool call; do not return `rawResult` as a fallback. Audit reason codes and policy versions without copying the sensitive result into logs.
 
@@ -187,72 +264,130 @@ verdict := {
 Install explicitly tested prerelease versions of the ACS and Agent Hooks packages:
 
 ```shell
+python -m pip install --pre agent-control-spec
 npm install @responsibleai/agent-control-spec@alpha
 ```
 
 The host creates the interceptor once and emits each raw tool result before returning it to the agent:
 
-```typescript
-import { AcsInterceptor } from "@responsibleai/agent-control-spec";
-import {
-  AgentContextBuilder,
-  InterceptionEmitter,
-  type JsonValue,
-} from "@responsibleai/agent-hooks";
+=== "Python"
 
-const emitter = new InterceptionEmitter();
-emitter.register(
-  AcsInterceptor.fromPath("manifest.yaml"),
-  "sanitize-customer-record",
-);
+    ```python
+    from collections.abc import Mapping
+    from typing import TypeGuard
 
-const contextBuilder = new AgentContextBuilder({
-  agentId: "customer-support-agent",
-  framework: "microsoft-agent-framework",
-  sessionId,
-});
+    from agent_control_spec import AcsInterceptor
+    from agent_hooks import AgentContextBuilder, InterceptionEmitter
 
-function isSafeCustomerRecord(
-  value: unknown,
-): value is SafeCustomerRecord {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.customer_id === "string" &&
-    typeof record.summary === "string" &&
-    Object.keys(record).every(
-      (key) => key === "customer_id" || key === "summary",
+    emitter = InterceptionEmitter()
+    emitter.register(
+        AcsInterceptor("manifest.yaml"),
+        "sanitize-customer-record",
     )
-  );
-}
 
-async function invokeCustomerRecordTool(
-  callId: string,
-  args: CustomerRecordToolArgs,
-): Promise<SafeCustomerRecord> {
-  const toolArgs: Record<string, JsonValue> = {
-    customer_id: args.customer_id,
-  };
-  const rawResult: Record<string, JsonValue> =
-    await getCustomerRecordFromService(args);
-  const context = contextBuilder.postToolCall(
-    callId,
-    "get_customer_record",
-    toolArgs,
-    rawResult,
-  );
-  const outcome = await emitter.emit(context);
+    context_builder = AgentContextBuilder(
+        agent_id="customer-support-agent",
+        framework="microsoft-agent-framework",
+        session_id=session_id,
+    )
 
-  if (!isSafeCustomerRecord(outcome.target)) {
-    throw new TypeError("Policy returned an invalid tool result.");
-  }
 
-  return outcome.target;
-}
-```
+    def is_safe_customer_record(
+        value: object,
+    ) -> TypeGuard[SafeCustomerRecord]:
+        if not isinstance(value, Mapping):
+            return False
+
+        return (
+            isinstance(value.get("customer_id"), str)
+            and isinstance(value.get("summary"), str)
+            and all(key in {"customer_id", "summary"} for key in value)
+        )
+
+
+    async def invoke_customer_record_tool(
+        call_id: str,
+        args: CustomerRecordToolArgs,
+    ) -> SafeCustomerRecord:
+        tool_args = {"customer_id": args["customer_id"]}
+        raw_result = await get_customer_record_from_service(args)
+        context = context_builder.post_tool_call(
+            call_id=call_id,
+            name="get_customer_record",
+            args=tool_args,
+            value=raw_result,
+        )
+        outcome = await emitter.emit(context)
+
+        if not is_safe_customer_record(outcome.target):
+            raise TypeError("Policy returned an invalid tool result.")
+
+        return outcome.target
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    import { AcsInterceptor } from "@responsibleai/agent-control-spec";
+    import {
+      AgentContextBuilder,
+      InterceptionEmitter,
+      type JsonValue,
+    } from "@responsibleai/agent-hooks";
+
+    const emitter = new InterceptionEmitter();
+    emitter.register(
+      AcsInterceptor.fromPath("manifest.yaml"),
+      "sanitize-customer-record",
+    );
+
+    const contextBuilder = new AgentContextBuilder({
+      agentId: "customer-support-agent",
+      framework: "microsoft-agent-framework",
+      sessionId,
+    });
+
+    function isSafeCustomerRecord(
+      value: unknown,
+    ): value is SafeCustomerRecord {
+      if (typeof value !== "object" || value === null) {
+        return false;
+      }
+
+      const record = value as Record<string, unknown>;
+      return (
+        typeof record.customer_id === "string" &&
+        typeof record.summary === "string" &&
+        Object.keys(record).every(
+          (key) => key === "customer_id" || key === "summary",
+        )
+      );
+    }
+
+    async function invokeCustomerRecordTool(
+      callId: string,
+      args: CustomerRecordToolArgs,
+    ): Promise<SafeCustomerRecord> {
+      const toolArgs: Record<string, JsonValue> = {
+        customer_id: args.customer_id,
+      };
+      const rawResult: Record<string, JsonValue> =
+        await getCustomerRecordFromService(args);
+      const context = contextBuilder.postToolCall(
+        callId,
+        "get_customer_record",
+        toolArgs,
+        rawResult,
+      );
+      const outcome = await emitter.emit(context);
+
+      if (!isSafeCustomerRecord(outcome.target)) {
+        throw new TypeError("Policy returned an invalid tool result.");
+      }
+
+      return outcome.target;
+    }
+    ```
 
 `emit` throws when policy denies the result or evaluation fails. On a transform verdict, Agent Hooks applies the replacement and returns the effective value as `outcome.target`. Returning `rawResult` instead would bypass policy and expose its sensitive fields to the agent. Do not catch an evaluation or validation error and return the original result.
 
@@ -262,6 +397,7 @@ Register this guarded handler as the tool exposed to a [Microsoft Agent Framewor
 
 - [Agent Control Specification repository and runtime overview](https://github.com/responsibleai/agent-control-spec)
 - [Agent Control Specification specification](https://github.com/responsibleai/agent-control-spec/blob/main/spec/SPECIFICATION.md)
+- [Agent Control Specification Python SDK](https://github.com/responsibleai/agent-control-spec/tree/main/sdk/python)
 - [Agent Control Specification Node wrapper](https://github.com/responsibleai/agent-control-spec/tree/main/sdk/node)
 - [Agent Hooks specification and SDK overview](https://github.com/responsibleai/agent-hooks)
 - [Rego policy language - Open Policy Agent](https://www.openpolicyagent.org/docs/policy-language)

@@ -56,62 +56,103 @@ The example uses a [`FoundryChatClient`](https://learn.microsoft.com/en-us/agent
 
     This implementation must not be adopted. The routing agent invokes a model even though the input status completely determines the downstream agent.
 
-```python
-import os
+=== "Python"
 
-from agent_framework import Agent
-from agent_framework.foundry import FoundryChatClient
-from agent_framework.orchestrations import HandoffBuilder
-from azure.identity import AzureCliCredential
+    ```python
+    import os
 
-client = FoundryChatClient(
-    project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
-    model=os.environ["FOUNDRY_MODEL_DEPLOYMENT_NAME"],
-    credential=AzureCliCredential(),
-)
+    from agent_framework import Agent
+    from agent_framework.foundry import FoundryChatClient
+    from agent_framework.orchestrations import HandoffBuilder
+    from azure.identity import AzureCliCredential
 
-routing_agent = Agent(
-    client=client,
-    name="routing_agent",
-    instructions=(
-        "The input is JSON with a status field. "
-        "If status is new, hand off to intake_agent. "
-        "If status is approved, hand off to fulfillment_agent. "
-        "If status is rejected, hand off to remediation_agent. "
-        "Do not perform any other work."
-    ),
-)
-
-intake_agent = Agent(
-    client=client,
-    name="intake_agent",
-    instructions="Validate and enrich new work items.",
-)
-fulfillment_agent = Agent(
-    client=client,
-    name="fulfillment_agent",
-    instructions="Fulfill approved work items.",
-)
-remediation_agent = Agent(
-    client=client,
-    name="remediation_agent",
-    instructions="Recommend corrections for rejected work items.",
-)
-
-workflow = (
-    HandoffBuilder(
-        name="status_routing_workflow",
-        participants=[
-            routing_agent,
-            intake_agent,
-            fulfillment_agent,
-            remediation_agent,
-        ],
+    client = FoundryChatClient(
+        project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
+        model=os.environ["FOUNDRY_MODEL_DEPLOYMENT_NAME"],
+        credential=AzureCliCredential(),
     )
-    .with_start_agent(routing_agent)
-    .build()
-)
-```
+
+    routing_agent = Agent(
+        client=client,
+        name="routing_agent",
+        instructions=(
+            "The input is JSON with a status field. "
+            "If status is new, hand off to intake_agent. "
+            "If status is approved, hand off to fulfillment_agent. "
+            "If status is rejected, hand off to remediation_agent. "
+            "Do not perform any other work."
+        ),
+    )
+
+    intake_agent = Agent(
+        client=client,
+        name="intake_agent",
+        instructions="Validate and enrich new work items.",
+    )
+    fulfillment_agent = Agent(
+        client=client,
+        name="fulfillment_agent",
+        instructions="Fulfill approved work items.",
+    )
+    remediation_agent = Agent(
+        client=client,
+        name="remediation_agent",
+        instructions="Recommend corrections for rejected work items.",
+    )
+
+    workflow = (
+        HandoffBuilder(
+            name="status_routing_workflow",
+            participants=[
+                routing_agent,
+                intake_agent,
+                fulfillment_agent,
+                remediation_agent,
+            ],
+        )
+        .with_start_agent(routing_agent)
+        .build()
+    )
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    const routingAgent = createAgent({
+      name: "routing_agent",
+      instructions: `
+        The input is JSON with a status field.
+        If status is new, hand off to intake_agent.
+        If status is approved, hand off to fulfillment_agent.
+        If status is rejected, hand off to remediation_agent.
+        Do not perform any other work.
+      `,
+    });
+
+    const intakeAgent = createAgent({
+      name: "intake_agent",
+      instructions: "Validate and enrich new work items.",
+    });
+    const fulfillmentAgent = createAgent({
+      name: "fulfillment_agent",
+      instructions: "Fulfill approved work items.",
+    });
+    const remediationAgent = createAgent({
+      name: "remediation_agent",
+      instructions: "Recommend corrections for rejected work items.",
+    });
+
+    const workflow = createHandoffWorkflow({
+      name: "status_routing_workflow",
+      participants: [
+        routingAgent,
+        intakeAgent,
+        fulfillmentAgent,
+        remediationAgent,
+      ],
+      startAgent: routingAgent,
+    });
+    ```
 
 Agent Framework handoffs are intended for context-dependent transfers of control. In this example, the routing prompt encodes an ordinary lookup table, so the first model invocation cannot improve the route.
 
@@ -133,36 +174,61 @@ flowchart LR
 
 Retain the specialist agents and replace the routing agent with typed application code:
 
-```python
-import json
-from dataclasses import asdict, dataclass
-from enum import StrEnum
+=== "Python"
+
+    ```python
+    import json
+    from dataclasses import asdict, dataclass
+    from enum import StrEnum
 
 
-class WorkItemStatus(StrEnum):
-    NEW = "new"
-    APPROVED = "approved"
-    REJECTED = "rejected"
+    class WorkItemStatus(StrEnum):
+        NEW = "new"
+        APPROVED = "approved"
+        REJECTED = "rejected"
 
 
-@dataclass(frozen=True)
-class WorkItem:
-    work_item_id: str
-    status: WorkItemStatus
-    details: str
+    @dataclass(frozen=True)
+    class WorkItem:
+        work_item_id: str
+        status: WorkItemStatus
+        details: str
 
 
-AGENT_BY_STATUS = {
-    WorkItemStatus.NEW: intake_agent,
-    WorkItemStatus.APPROVED: fulfillment_agent,
-    WorkItemStatus.REJECTED: remediation_agent,
-}
+    AGENT_BY_STATUS = {
+        WorkItemStatus.NEW: intake_agent,
+        WorkItemStatus.APPROVED: fulfillment_agent,
+        WorkItemStatus.REJECTED: remediation_agent,
+    }
 
 
-async def dispatch(item: WorkItem):
-    agent = AGENT_BY_STATUS[item.status]
-    return await agent.run(json.dumps(asdict(item)))
-```
+    async def dispatch(item: WorkItem):
+        agent = AGENT_BY_STATUS[item.status]
+        return await agent.run(json.dumps(asdict(item)))
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    type WorkItemStatus = "new" | "approved" | "rejected";
+
+    interface WorkItem {
+      workItemId: string;
+      status: WorkItemStatus;
+      details: string;
+    }
+
+    const agentByStatus = {
+      new: intakeAgent,
+      approved: fulfillmentAgent,
+      rejected: remediationAgent,
+    } satisfies Record<WorkItemStatus, typeof intakeAgent>;
+
+    async function dispatch(item: WorkItem) {
+      const agent = agentByStatus[item.status];
+      return agent.run(JSON.stringify(item));
+    }
+    ```
 
 The replacement makes routing deterministic, testable, and independent of model behavior. Invalid statuses should fail during input validation rather than being interpreted by a model. The selected specialist can still use a model for the work that requires one.
 

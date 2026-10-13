@@ -62,88 +62,202 @@ For a side effect that cannot join the transaction, prefer a downstream API with
 
 The following tool submits refund commands through [Azure Service Bus duplicate detection](https://learn.microsoft.com/en-us/azure/service-bus-messaging/duplicate-detection). The agent host creates one operation ID when it first accepts the action and persists the fingerprint of the validated arguments. Retries and approval resubmissions receive that same trusted context.
 
-```typescript
-import { createHash } from "node:crypto";
-import { DefaultAzureCredential } from "@azure/identity";
-import {
-  ServiceBusClient,
-  type ServiceBusMessage,
-} from "@azure/service-bus";
+=== "Python"
 
-interface RefundInput {
-  caseId: string;
-  paymentId: string;
-  amountMinor: number;
-  currency: string;
-}
+    ```python
+    import hashlib
+    import json
+    import os
+    from dataclasses import dataclass
+    from typing import Literal, TypedDict
 
-interface ToolExecutionContext {
-  tenantId: string;
-  operationId: string;
-  approvedInputFingerprint: string;
-}
+    from azure.identity.aio import DefaultAzureCredential
+    from azure.servicebus import ServiceBusMessage
+    from azure.servicebus.aio import ServiceBusClient
 
-class IdempotencyConflictError extends Error {}
 
-const serviceBus = new ServiceBusClient(
-  process.env.SERVICE_BUS_NAMESPACE!,
-  new DefaultAzureCredential(),
-);
-const sender = serviceBus.createSender("refund-commands");
+    @dataclass(frozen=True)
+    class RefundInput:
+        case_id: str
+        payment_id: str
+        amount_minor: int
+        currency: str
 
-function hash(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
-}
 
-function fingerprint(input: RefundInput): string {
-  return hash(JSON.stringify([
-    input.caseId,
-    input.paymentId,
-    input.amountMinor,
-    input.currency,
-  ]));
-}
+    @dataclass(frozen=True)
+    class ToolExecutionContext:
+        tenant_id: str
+        operation_id: str
+        approved_input_fingerprint: str
 
-async function requestRefund(
-  input: RefundInput,
-  context: ToolExecutionContext,
-): Promise<{ operationId: string; status: "accepted" }> {
-  const inputFingerprint = fingerprint(input);
 
-  if (inputFingerprint !== context.approvedInputFingerprint) {
-    throw new IdempotencyConflictError(
-      "The operation ID is already bound to different arguments.",
+    class RefundAccepted(TypedDict):
+        operation_id: str
+        status: Literal["accepted"]
+
+
+    class IdempotencyConflictError(Exception):
+        pass
+
+
+    credential = DefaultAzureCredential()
+    service_bus = ServiceBusClient(
+        fully_qualified_namespace=os.environ["SERVICE_BUS_NAMESPACE"],
+        credential=credential,
+    )
+    sender = service_bus.get_queue_sender(queue_name="refund-commands")
+
+
+    def hash_value(value: str) -> str:
+        return hashlib.sha256(value.encode()).hexdigest()
+
+
+    def fingerprint(input: RefundInput) -> str:
+        return hash_value(json.dumps(
+            [
+                input.case_id,
+                input.payment_id,
+                input.amount_minor,
+                input.currency,
+            ],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ))
+
+
+    async def request_refund(
+        input: RefundInput,
+        context: ToolExecutionContext,
+    ) -> RefundAccepted:
+        input_fingerprint = fingerprint(input)
+
+        if input_fingerprint != context.approved_input_fingerprint:
+            raise IdempotencyConflictError(
+                "The operation ID is already bound to different arguments."
+            )
+
+        message_id = hash_value("\0".join([
+            context.tenant_id,
+            "request_refund",
+            context.operation_id,
+        ]))
+
+        body = json.dumps(
+            {
+                "caseId": input.case_id,
+                "paymentId": input.payment_id,
+                "amountMinor": input.amount_minor,
+                "currency": input.currency,
+                "operationId": context.operation_id,
+                "tenantId": context.tenant_id,
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+
+        message = ServiceBusMessage(
+            body=body,
+            content_type="application/json",
+            message_id=message_id,
+            correlation_id=context.operation_id,
+            application_properties={
+                "inputFingerprint": input_fingerprint,
+                "tenantId": context.tenant_id,
+            },
+        )
+
+        await sender.send_messages(message)
+
+        return {
+            "operation_id": context.operation_id,
+            "status": "accepted",
+        }
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    import { createHash } from "node:crypto";
+    import { DefaultAzureCredential } from "@azure/identity";
+    import {
+      ServiceBusClient,
+      type ServiceBusMessage,
+    } from "@azure/service-bus";
+
+    interface RefundInput {
+      caseId: string;
+      paymentId: string;
+      amountMinor: number;
+      currency: string;
+    }
+
+    interface ToolExecutionContext {
+      tenantId: string;
+      operationId: string;
+      approvedInputFingerprint: string;
+    }
+
+    class IdempotencyConflictError extends Error {}
+
+    const serviceBus = new ServiceBusClient(
+      process.env.SERVICE_BUS_NAMESPACE!,
+      new DefaultAzureCredential(),
     );
-  }
+    const sender = serviceBus.createSender("refund-commands");
 
-  const messageId = hash([
-    context.tenantId,
-    "request_refund",
-    context.operationId,
-  ].join("\0"));
+    function hash(value: string): string {
+      return createHash("sha256").update(value).digest("hex");
+    }
 
-  const message: ServiceBusMessage = {
-    messageId,
-    correlationId: context.operationId,
-    applicationProperties: {
-      inputFingerprint,
-      tenantId: context.tenantId,
-    },
-    body: {
-      ...input,
-      operationId: context.operationId,
-      tenantId: context.tenantId,
-    },
-  };
+    function fingerprint(input: RefundInput): string {
+      return hash(JSON.stringify([
+        input.caseId,
+        input.paymentId,
+        input.amountMinor,
+        input.currency,
+      ]));
+    }
 
-  await sender.sendMessages(message);
+    async function requestRefund(
+      input: RefundInput,
+      context: ToolExecutionContext,
+    ): Promise<{ operationId: string; status: "accepted" }> {
+      const inputFingerprint = fingerprint(input);
 
-  return {
-    operationId: context.operationId,
-    status: "accepted",
-  };
-}
-```
+      if (inputFingerprint !== context.approvedInputFingerprint) {
+        throw new IdempotencyConflictError(
+          "The operation ID is already bound to different arguments.",
+        );
+      }
+
+      const messageId = hash([
+        context.tenantId,
+        "request_refund",
+        context.operationId,
+      ].join("\0"));
+
+      const message: ServiceBusMessage = {
+        messageId,
+        correlationId: context.operationId,
+        applicationProperties: {
+          inputFingerprint,
+          tenantId: context.tenantId,
+        },
+        body: {
+          ...input,
+          operationId: context.operationId,
+          tenantId: context.tenantId,
+        },
+      };
+
+      await sender.sendMessages(message);
+
+      return {
+        operationId: context.operationId,
+        status: "accepted",
+      };
+    }
+    ```
 
 Provision the queue with duplicate detection enabled and choose a history window that covers send retries. Service Bus tracks the application-controlled [`messageId`](https://learn.microsoft.com/en-us/javascript/api/@azure/service-bus/servicebusmessage?view=azure-node-latest) during that window. A repeated send with the same ID succeeds from the sender's perspective, but Service Bus drops the duplicate. It compares only the ID, not the body, which is why the host must separately bind the operation ID to the approved argument fingerprint.
 

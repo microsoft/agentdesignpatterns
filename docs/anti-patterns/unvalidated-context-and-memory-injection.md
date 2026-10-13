@@ -45,26 +45,51 @@ The following implementation is intentionally unsafe and must not be adopted. It
 
     This implementation erases provenance and turns untrusted retrieved text into persistent instruction.
 
-```typescript
-async function learnFromSearch(query: string): Promise<void> {
-  const documents = await searchClient.search(query);
+=== "Python"
 
-  for (const document of documents) {
-    await memory.append(document.text);
-  }
-}
+    ```python
+    async def learn_from_search(query: str) -> None:
+        documents = await search_client.search(query)
 
-async function runAgent(request: string): Promise<string> {
-  const remembered = await memory.readAll();
-  return agent.run(`
-    Follow these remembered instructions and facts:
-    ${remembered.join("\n")}
+        for document in documents:
+            await memory.append(document.text)
 
-    User request:
-    ${request}
-  `);
-}
-```
+
+    async def run_agent(request: str) -> str:
+        remembered = await memory.read_all()
+        return await agent.run(
+            f"""
+            Follow these remembered instructions and facts:
+            {chr(10).join(remembered)}
+
+            User request:
+            {request}
+            """
+        )
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    async function learnFromSearch(query: string): Promise<void> {
+      const documents = await searchClient.search(query);
+
+      for (const document of documents) {
+        await memory.append(document.text);
+      }
+    }
+
+    async function runAgent(request: string): Promise<string> {
+      const remembered = await memory.readAll();
+      return agent.run(`
+        Follow these remembered instructions and facts:
+        ${remembered.join("\n")}
+
+        User request:
+        ${request}
+      `);
+    }
+    ```
 
 The code does not preserve source identity, tenant, authorization, trust level, content role, version, or write actor. Any retrieved passage can become a durable instruction for any later run.
 
@@ -74,37 +99,81 @@ Keep trusted instructions outside retrieved content. Store memory as typed recor
 
 [OWASP ASI06: Memory & Context Poisoning](https://genai.owasp.org/2026/05/13/memory-is-a-feature-it-is-also-an-attack-surface/) identifies persistence as the defining risk: attacker-controlled content can remain in memory, hooks, configuration, or other trusted state and influence future reasoning and actions. Treat every path that promotes content into reusable context as a security boundary.
 
-```typescript
-interface MemoryRecord {
-  id: string;
-  tenantId: string;
-  subjectId: string;
-  sourceUri: string;
-  sourceVersion: string;
-  writtenBy: string;
-  content: string;
-  role: "reference-data" | "user-preference" | "verified-fact";
-  trust: "untrusted" | "verified";
-  expiresAt: Date;
-}
+=== "Python"
 
-async function loadContext(
-  authority: TaskAuthority,
-  query: string,
-): Promise<MemoryRecord[]> {
-  const records = await memory.search({
-    tenantId: authority.tenantId,
-    subjectId: authority.caseId,
-    query,
-  });
+    ```python
+    from dataclasses import dataclass
+    from datetime import datetime
+    from typing import Literal
 
-  return records.filter(
-    (record) =>
-      record.expiresAt.getTime() > Date.now() &&
-      memoryPolicy.mayRead(authority, record),
-  );
-}
-```
+
+    @dataclass(frozen=True)
+    class MemoryRecord:
+        id: str
+        tenant_id: str
+        subject_id: str
+        source_uri: str
+        source_version: str
+        written_by: str
+        content: str
+        role: Literal[
+            "reference-data", "user-preference", "verified-fact"
+        ]
+        trust: Literal["untrusted", "verified"]
+        expires_at: datetime
+
+
+    async def load_context(
+        authority: TaskAuthority,
+        query: str,
+    ) -> list[MemoryRecord]:
+        records = await memory.search(
+            tenant_id=authority.tenant_id,
+            subject_id=authority.case_id,
+            query=query,
+        )
+
+        return [
+            record
+            for record in records
+            if record.expires_at > datetime.now(record.expires_at.tzinfo)
+            and memory_policy.may_read(authority, record)
+        ]
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    interface MemoryRecord {
+      id: string;
+      tenantId: string;
+      subjectId: string;
+      sourceUri: string;
+      sourceVersion: string;
+      writtenBy: string;
+      content: string;
+      role: "reference-data" | "user-preference" | "verified-fact";
+      trust: "untrusted" | "verified";
+      expiresAt: Date;
+    }
+
+    async function loadContext(
+      authority: TaskAuthority,
+      query: string,
+    ): Promise<MemoryRecord[]> {
+      const records = await memory.search({
+        tenantId: authority.tenantId,
+        subjectId: authority.caseId,
+        query,
+      });
+
+      return records.filter(
+        (record) =>
+          record.expiresAt.getTime() > Date.now() &&
+          memoryPolicy.mayRead(authority, record),
+      );
+    }
+    ```
 
 Render retrieved records in a clearly delimited data section that states they may contain untrusted instructions. Only a separate, authorized verification process may promote content to `verified`, and promotion must create a new auditable version rather than overwrite provenance.
 

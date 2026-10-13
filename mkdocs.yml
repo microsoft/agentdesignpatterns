@@ -7,6 +7,7 @@ theme:
   icon:
     logo: fontawesome/solid/hexagon-nodes
   features:
+    - content.tabs.link
     - navigation.expand
     - navigation.indexes
     - navigation.sections
@@ -16,6 +17,8 @@ markdown_extensions:
   - admonition
   - attr_list
   - meta
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

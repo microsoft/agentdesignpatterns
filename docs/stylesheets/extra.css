@@ -9,6 +9,20 @@
   text-align: center;
 }
 
+.md-typeset .tabbed-set {
+  margin: 1em 0;
+}
+
+.md-typeset .tabbed-labels {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.md-typeset .tabbed-labels > label {
+  min-width: 6.5rem;
+  text-align: center;
+}
+
 .md-nav--primary
   > .md-nav__list
   > .md-nav__item--section
@@ -58,6 +72,10 @@
 }
 
 @media screen and (max-width: 44.9844em) {
+  .md-typeset .tabbed-labels > label {
+    flex: 1 0 50%;
+  }
+
   .catalog-category-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;

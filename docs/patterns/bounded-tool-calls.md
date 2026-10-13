@@ -37,57 +37,120 @@ Choose the limit for the task rather than using one global value. A lookup may n
 
 The following [TypeScript](https://www.typescriptlang.org/docs/) wrapper enforces a shared budget around tools supplied to a [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/) or [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry) agent. The wrapper counts failed attempts because they still consume resources.
 
-```typescript
-type AgentTool<TInput, TOutput> = (input: TInput) => Promise<TOutput>;
+=== "Python"
 
-class ToolCallLimitExceeded extends Error {
-  constructor(
-    readonly limit: number,
-    readonly toolName: string,
-  ) {
-    super(`Tool call limit of ${limit} reached before calling ${toolName}.`);
-  }
-}
+    ```python
+    from collections.abc import Awaitable, Callable
+    from typing import TypeVar
 
-class ToolCallBudget {
-  private calls = 0;
+    TInput = TypeVar("TInput")
+    TOutput = TypeVar("TOutput")
+    AgentTool = Callable[[TInput], Awaitable[TOutput]]
 
-  constructor(readonly limit: number) {
-    if (!Number.isInteger(limit) || limit < 1) {
-      throw new RangeError("Tool call limit must be a positive integer.");
+
+    class ToolCallLimitExceeded(Exception):
+        def __init__(self, limit: int, tool_name: str) -> None:
+            self.limit = limit
+            self.tool_name = tool_name
+            super().__init__(
+                f"Tool call limit of {limit} reached before calling {tool_name}."
+            )
+
+
+    class ToolCallBudget:
+        def __init__(self, limit: int) -> None:
+            if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1:
+                raise ValueError("Tool call limit must be a positive integer.")
+
+            self.limit = limit
+            self._calls = 0
+
+        async def invoke(
+            self,
+            tool_name: str,
+            tool: AgentTool[TInput, TOutput],
+            input_value: TInput,
+        ) -> TOutput:
+            if self._calls >= self.limit:
+                raise ToolCallLimitExceeded(self.limit, tool_name)
+
+            self._calls += 1
+            return await tool(input_value)
+
+        @property
+        def remaining(self) -> int:
+            return self.limit - self._calls
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    type AgentTool<TInput, TOutput> = (input: TInput) => Promise<TOutput>;
+
+    class ToolCallLimitExceeded extends Error {
+      constructor(
+        readonly limit: number,
+        readonly toolName: string,
+      ) {
+        super(`Tool call limit of ${limit} reached before calling ${toolName}.`);
+      }
     }
-  }
 
-  async invoke<TInput, TOutput>(
-    toolName: string,
-    tool: AgentTool<TInput, TOutput>,
-    input: TInput,
-  ): Promise<TOutput> {
-    if (this.calls >= this.limit) {
-      throw new ToolCallLimitExceeded(this.limit, toolName);
+    class ToolCallBudget {
+      private calls = 0;
+
+      constructor(readonly limit: number) {
+        if (!Number.isInteger(limit) || limit < 1) {
+          throw new RangeError("Tool call limit must be a positive integer.");
+        }
+      }
+
+      async invoke<TInput, TOutput>(
+        toolName: string,
+        tool: AgentTool<TInput, TOutput>,
+        input: TInput,
+      ): Promise<TOutput> {
+        if (this.calls >= this.limit) {
+          throw new ToolCallLimitExceeded(this.limit, toolName);
+        }
+
+        this.calls += 1;
+        return tool(input);
+      }
+
+      get remaining(): number {
+        return this.limit - this.calls;
+      }
     }
-
-    this.calls += 1;
-    return tool(input);
-  }
-
-  get remaining(): number {
-    return this.limit - this.calls;
-  }
-}
-```
+    ```
 
 Create one `ToolCallBudget` for an agent run, then expose only wrapped tool handlers to the agent:
 
-```typescript
-const budget = new ToolCallBudget(8);
+=== "Python"
 
-const searchTool = (query: string) =>
-  budget.invoke("search", searchDocuments, query);
+    ```python
+    budget = ToolCallBudget(8)
 
-const updateTool = (change: ProposedChange) =>
-  budget.invoke("update", applyProposedChange, change);
-```
+
+    async def search_tool(query: str) -> SearchResult:
+        return await budget.invoke("search", search_documents, query)
+
+
+    async def update_tool(change: ProposedChange) -> UpdateResult:
+        return await budget.invoke("update", apply_proposed_change, change)
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    const budget = new ToolCallBudget(8);
+
+    const searchTool = (query: string) =>
+      budget.invoke("search", searchDocuments, query);
+
+    const updateTool = (change: ProposedChange) =>
+      budget.invoke("update", applyProposedChange, change);
+    ```
 
 [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/) also supports [bounded agent loops](https://learn.microsoft.com/en-us/agent-framework/agents/looping). An iteration limit and a tool-call budget are complementary: one limits complete reasoning iterations, while the other limits calls at the tool boundary.
 

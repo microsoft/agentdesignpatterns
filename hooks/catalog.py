@@ -32,6 +32,17 @@ ARTICLE_TYPES = {
 INDEX_MARKER = re.compile(r"<!-- catalog-index:(all|pattern|anti-pattern) -->")
 ID_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SECOND_LEVEL_HEADING = re.compile(r"^## (.+)$", re.MULTILINE)
+LANGUAGE_TAB = re.compile(r'^=== "(Python|TypeScript)"$')
+CONTENT_TAB = re.compile(r'^=== "([^"]+)"$')
+LANGUAGE_FENCE = re.compile(r"^(    )```(python|typescript)$")
+ANY_LANGUAGE_FENCE = re.compile(r"^\s*```(python|typescript)\s*$")
+UNSUPPORTED_LANGUAGE_FENCE = re.compile(
+    r"^\s*```(?:javascript|js|py|ts)\s*$"
+)
+EXPECTED_LANGUAGE_TABS = [
+    ("Python", "python"),
+    ("TypeScript", "typescript"),
+]
 
 _articles: dict[str, dict[str, Any]] = {}
 
@@ -160,6 +171,113 @@ def _validate_article(
         raise PluginError(
             f"{path}: level-two sections must be exactly [{expected}]; found [{actual}]"
         )
+
+    _validate_language_samples(path, body)
+
+
+def _validate_language_samples(path: Path, body: str) -> None:
+    lines = body.splitlines()
+    consumed_fences: set[int] = set()
+    line_index = 0
+
+    while line_index < len(lines):
+        content_tab_match = CONTENT_TAB.fullmatch(lines[line_index])
+        if (
+            content_tab_match is not None
+            and LANGUAGE_TAB.fullmatch(lines[line_index]) is None
+        ):
+            raise PluginError(
+                f"{path}: unsupported content tab "
+                f"'{content_tab_match.group(1)}'; executable samples must use "
+                "paired Python and TypeScript tabs"
+            )
+
+        tab_match = LANGUAGE_TAB.fullmatch(lines[line_index])
+        if tab_match is None:
+            line_index += 1
+            continue
+
+        tabs: list[tuple[str, str]] = []
+        while line_index < len(lines):
+            tab_match = LANGUAGE_TAB.fullmatch(lines[line_index])
+            if tab_match is None:
+                break
+
+            label = tab_match.group(1)
+            line_index += 1
+            while line_index < len(lines) and not lines[line_index]:
+                line_index += 1
+
+            if line_index >= len(lines):
+                raise PluginError(
+                    f"{path}: language tab '{label}' has no code fence"
+                )
+
+            fence_match = LANGUAGE_FENCE.fullmatch(lines[line_index])
+            if fence_match is None:
+                raise PluginError(
+                    f"{path}: language tab '{label}' must contain one indented "
+                    "python or typescript code fence"
+                )
+
+            language = fence_match.group(2)
+            consumed_fences.add(line_index)
+            line_index += 1
+
+            while line_index < len(lines) and lines[line_index] != "    ```":
+                if lines[line_index] and not lines[line_index].startswith("    "):
+                    raise PluginError(
+                        f"{path}: code in language tab '{label}' must be "
+                        "indented by four spaces"
+                    )
+                line_index += 1
+
+            if line_index >= len(lines):
+                raise PluginError(
+                    f"{path}: language tab '{label}' has an unclosed code fence"
+                )
+
+            line_index += 1
+            while line_index < len(lines) and not lines[line_index]:
+                line_index += 1
+            tabs.append((label, language))
+
+        if (
+            line_index < len(lines)
+            and CONTENT_TAB.fullmatch(lines[line_index]) is not None
+            and LANGUAGE_TAB.fullmatch(lines[line_index]) is None
+        ):
+            unsupported = CONTENT_TAB.fullmatch(lines[line_index])
+            raise PluginError(
+                f"{path}: unsupported content tab "
+                f"'{unsupported.group(1)}'; language sample groups must contain "
+                "only Python and TypeScript"
+            )
+
+        if tabs != EXPECTED_LANGUAGE_TABS:
+            actual = ", ".join(
+                f"{label}/{language}" for label, language in tabs
+            )
+            expected = ", ".join(
+                f"{label}/{language}"
+                for label, language in EXPECTED_LANGUAGE_TABS
+            )
+            raise PluginError(
+                f"{path}: language sample tabs must be exactly [{expected}]; "
+                f"found [{actual or 'none'}]"
+            )
+
+    for index, line in enumerate(lines):
+        if UNSUPPORTED_LANGUAGE_FENCE.fullmatch(line):
+            raise PluginError(
+                f"{path}: unsupported language fence; use 'python' or "
+                "'typescript' in a paired language tab group"
+            )
+        if ANY_LANGUAGE_FENCE.fullmatch(line) and index not in consumed_fences:
+            raise PluginError(
+                f"{path}: python and typescript code fences must be inside a "
+                "paired Python/TypeScript language tab group"
+            )
 
 
 def _render_index(index_type: str, page: Page, files: Files) -> str:

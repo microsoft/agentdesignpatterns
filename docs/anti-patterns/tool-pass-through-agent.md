@@ -49,50 +49,95 @@ A [Microsoft Foundry prompt agent](https://learn.microsoft.com/en-us/azure/found
 
     This configuration must not be adopted. It forces a model call merely to dispatch `get_order_status` and relay its output.
 
-```python
-import os
+=== "Python"
 
-from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import FunctionTool, PromptAgentDefinition, Tool
-from azure.identity import DefaultAzureCredential
+    ```python
+    import os
 
-project = AIProjectClient(
-    endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
-    credential=DefaultAzureCredential(),
-)
+    from azure.ai.projects import AIProjectClient
+    from azure.ai.projects.models import FunctionTool, PromptAgentDefinition, Tool
+    from azure.identity import DefaultAzureCredential
 
-order_status_tool = FunctionTool(
-    name="get_order_status",
-    description="Return the current status for one order.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "order_id": {
-                "type": "string",
-                "description": "The exact order identifier supplied by the caller.",
+    project = AIProjectClient(
+        endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
+        credential=DefaultAzureCredential(),
+    )
+
+    order_status_tool = FunctionTool(
+        name="get_order_status",
+        description="Return the current status for one order.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": (
+                        "The exact order identifier supplied by the caller."
+                    ),
+                },
             },
+            "required": ["order_id"],
+            "additionalProperties": False,
         },
-        "required": ["order_id"],
-        "additionalProperties": False,
-    },
-    strict=True,
-)
+        strict=True,
+    )
 
-tools: list[Tool] = [order_status_tool]
+    tools: list[Tool] = [order_status_tool]
 
-project.agents.create_version(
-    agent_name="antipattern-tool-pass-through",
-    definition=PromptAgentDefinition(
-        model=os.environ["FOUNDRY_MODEL_DEPLOYMENT_NAME"],
-        instructions=(
-            "For every request, pass the supplied order ID to get_order_status. "
-            "Return the tool output verbatim. Do not explain, summarize, combine "
-            "it with other information, or answer without calling the tool."
+    project.agents.create_version(
+        agent_name="antipattern-tool-pass-through",
+        definition=PromptAgentDefinition(
+            model=os.environ["FOUNDRY_MODEL_DEPLOYMENT_NAME"],
+            instructions=(
+                "For every request, pass the supplied order ID to "
+                "get_order_status. Return the tool output verbatim. "
+                "Do not explain, summarize, combine it with other information, "
+                "or answer without calling the tool."
+            ),
+            tools=tools,
         ),
-        tools=tools,
-    ),
-)
-```
+    )
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    import { AIProjectClient } from "@azure/ai-projects";
+    import { DefaultAzureCredential } from "@azure/identity";
+
+    const project = new AIProjectClient(
+      process.env.FOUNDRY_PROJECT_ENDPOINT!,
+      new DefaultAzureCredential(),
+    );
+
+    const orderStatusTool = {
+      type: "function" as const,
+      name: "get_order_status",
+      description: "Return the current status for one order.",
+      parameters: {
+        type: "object",
+        properties: {
+          order_id: {
+            type: "string",
+            description: "The exact order identifier supplied by the caller.",
+          },
+        },
+        required: ["order_id"],
+        additionalProperties: false,
+      },
+      strict: true,
+    };
+
+    await project.agents.createVersion("antipattern-tool-pass-through", {
+      kind: "prompt",
+      model: process.env.FOUNDRY_MODEL_DEPLOYMENT_NAME!,
+      instructions:
+        "For every request, pass the supplied order ID to get_order_status. " +
+        "Return the tool output verbatim. Do not explain, summarize, combine " +
+        "it with other information, or answer without calling the tool.",
+      tools: [orderStatusTool],
+    });
+    ```
 
 The application hosting the conversation must still execute `get_order_status` and submit its output to the prompt agent. The model then consumes that output only to reproduce it. The function-calling documentation describes this additional request, execution, submission, and response cycle.
 
@@ -108,53 +153,91 @@ The application hosting the conversation must still execute `get_order_status` a
 
     This implementation must not be adopted. The caller supplies a complete order ID, but the agent invokes a model to select the only tool and repeat its result.
 
-```python
-import asyncio
-import json
-import os
+=== "Python"
 
-from agent_framework import Agent, tool
-from agent_framework.foundry import FoundryChatClient
-from azure.identity import AzureCliCredential
+    ```python
+    import asyncio
+    import json
+    import os
 
-
-def fetch_order_status(order_id: str) -> str:
-    return json.dumps(
-        {
-            "order_id": order_id,
-            "status": "shipped",
-            "estimated_delivery": "2026-10-15",
-        }
-    )
+    from agent_framework import Agent, tool
+    from agent_framework.foundry import FoundryChatClient
+    from azure.identity import AzureCliCredential
 
 
-@tool(approval_mode="never_require")
-def get_order_status(order_id: str) -> str:
-    """Return the current status for one order."""
-    return fetch_order_status(order_id)
+    def fetch_order_status(order_id: str) -> str:
+        return json.dumps(
+            {
+                "order_id": order_id,
+                "status": "shipped",
+                "estimated_delivery": "2026-10-15",
+            }
+        )
 
 
-async def main() -> None:
-    agent = Agent(
-        client=FoundryChatClient(
-            project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
-            model=os.environ["FOUNDRY_MODEL_DEPLOYMENT_NAME"],
-            credential=AzureCliCredential(),
-        ),
-        instructions=(
-            "Always call get_order_status with the supplied order ID. "
-            "Return the tool output verbatim and add nothing else."
-        ),
-        tools=[get_order_status],
-    )
-
-    result = await agent.run("Get the status of order A-1042.")
-    print(result)
+    @tool(approval_mode="never_require")
+    def get_order_status(order_id: str) -> str:
+        """Return the current status for one order."""
+        return fetch_order_status(order_id)
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
-```
+    async def main() -> None:
+        agent = Agent(
+            client=FoundryChatClient(
+                project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
+                model=os.environ["FOUNDRY_MODEL_DEPLOYMENT_NAME"],
+                credential=AzureCliCredential(),
+            ),
+            instructions=(
+                "Always call get_order_status with the supplied order ID. "
+                "Return the tool output verbatim and add nothing else."
+            ),
+            tools=[get_order_status],
+        )
+
+        result = await agent.run("Get the status of order A-1042.")
+        print(result)
+
+
+    if __name__ == "__main__":
+        asyncio.run(main())
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    function fetchOrderStatus(orderId: string): string {
+      return JSON.stringify({
+        order_id: orderId,
+        status: "shipped",
+        estimated_delivery: "2026-10-15",
+      });
+    }
+
+    const getOrderStatus = defineTool({
+      name: "get_order_status",
+      description: "Return the current status for one order.",
+      approvalMode: "never_require",
+      parameters: {
+        type: "object",
+        properties: { order_id: { type: "string" } },
+        required: ["order_id"],
+        additionalProperties: false,
+      },
+      execute: ({ order_id }: { order_id: string }) =>
+        fetchOrderStatus(order_id),
+    });
+
+    const agent = createAgent({
+      instructions:
+        "Always call get_order_status with the supplied order ID. " +
+        "Return the tool output verbatim and add nothing else.",
+      tools: [getOrderStatus],
+    });
+
+    const result = await agent.run("Get the status of order A-1042.");
+    console.log(result);
+    ```
 
 `fetch_order_status` represents the service SDK or HTTP call that performs the useful work. In a real pass-through agent, the model invocation surrounds this call but does not improve its inputs or output.
 
@@ -170,9 +253,17 @@ flowchart LR
 
 Replace both agents with a direct call:
 
-```python
-print(fetch_order_status("A-1042"))
-```
+=== "Python"
+
+    ```python
+    print(fetch_order_status("A-1042"))
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    console.log(fetchOrderStatus("A-1042"));
+    ```
 
 The direct path preserves a deterministic contract and removes model tokens, inference latency, tool-selection errors, and agent-specific operations. If a natural-language interface is still required, parse and validate only the fields that genuinely need interpretation, then invoke the service directly rather than routing already structured requests through an agent.
 

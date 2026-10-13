@@ -20,11 +20,12 @@ Create or revise a catalog article by applying the project-wide Article Standard
    - [Pattern template](./assets/pattern-template.md)
    - [Anti-pattern template](./assets/anti-pattern-template.md)
 4. Research and write the article in the matching `docs/` directory, following the ambient Article Standards instruction.
-5. Audit inline links and References. Keep sources that materially support the agent behavior, architecture, or central APIs. Remove generic language, credential, serialization, and transport documentation included only because the example uses those incidental technologies.
-6. Run the strict site build:
+5. Provide equivalent Python and TypeScript implementations for every executable sample using the required linked content-tab structure. Keep supporting Mermaid, YAML, Rego, and shell fragments outside language tabs.
+6. Audit inline links and References. Keep sources that materially support the agent behavior, architecture, or central APIs. Remove generic language, credential, serialization, and transport documentation included only because the example uses those incidental technologies.
+7. Run the strict site build:
 
    ```shell
    bash tools/build.sh
    ```
 
-7. Fix all metadata, structure, navigation, generated-link, and build errors before finishing.
+8. Fix all metadata, structure, language-sample, navigation, generated-link, and build errors before finishing.

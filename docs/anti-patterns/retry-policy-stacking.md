@@ -46,23 +46,39 @@ The following implementation is intentionally unreliable and must not be adopted
 
     This implementation can turn one operation into 27 dependency calls and hides the true attempt count.
 
-```typescript
-async function modelDrivenToolCall(input: RefundInput): Promise<Refund> {
-  return retry(3, () =>
-    agentToolWrapper(input),
-  );
-}
+=== "Python"
 
-async function agentToolWrapper(input: RefundInput): Promise<Refund> {
-  return retry(3, () =>
-    paymentClient.refund(input),
-  );
-}
+    ```python
+    async def model_driven_tool_call(input: RefundInput) -> Refund:
+        return await retry(3, lambda: agent_tool_wrapper(input))
 
-const paymentClient = createPaymentClient({
-  maxRetries: 3,
-});
-```
+
+    async def agent_tool_wrapper(input: RefundInput) -> Refund:
+        return await retry(3, lambda: payment_client.refund(input))
+
+
+    payment_client = create_payment_client(max_retries=3)
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    async function modelDrivenToolCall(input: RefundInput): Promise<Refund> {
+      return retry(3, () =>
+        agentToolWrapper(input),
+      );
+    }
+
+    async function agentToolWrapper(input: RefundInput): Promise<Refund> {
+      return retry(3, () =>
+        paymentClient.refund(input),
+      );
+    }
+
+    const paymentClient = createPaymentClient({
+      maxRetries: 3,
+    });
+    ```
 
 The model may add further attempts after seeing an error, and infrastructure outside this process may retry again. None of the layers propagates an operation ID, attempt count, deadline, or remaining budget.
 
@@ -70,40 +86,88 @@ The model may add further attempts after seeing an error, and infrastructure out
 
 Inventory every retrying layer and designate one owner for retries of a logical operation. Disable redundant policies where practical. Pass a stable operation ID, absolute deadline, and shared attempt budget through the complete call chain.
 
-```typescript
-interface RetryContext {
-  operationId: string;
-  deadlineMs: number;
-  attemptsRemaining: number;
-}
+=== "Python"
 
-async function executeWithRetryBudget<T>(
-  context: RetryContext,
-  operation: (attempt: number) => Promise<T>,
-): Promise<T> {
-  let attempt = 0;
+    ```python
+    import time
+    from collections.abc import Awaitable, Callable
+    from dataclasses import dataclass
+    from typing import TypeVar
 
-  while (context.attemptsRemaining > 0) {
-    if (Date.now() >= context.deadlineMs) {
-      throw new Error("Retry deadline exhausted.");
+    T = TypeVar("T")
+
+
+    @dataclass
+    class RetryContext:
+        operation_id: str
+        deadline_ms: float
+        attempts_remaining: int
+
+
+    async def execute_with_retry_budget(
+        context: RetryContext,
+        operation: Callable[[int], Awaitable[T]],
+    ) -> T:
+        attempt = 0
+
+        while context.attempts_remaining > 0:
+            if time.time() * 1000 >= context.deadline_ms:
+                raise TimeoutError("Retry deadline exhausted.")
+
+            context.attempts_remaining -= 1
+            attempt += 1
+
+            try:
+                return await operation(attempt)
+            except Exception as error:
+                if (
+                    not is_transient(error)
+                    or context.attempts_remaining == 0
+                ):
+                    raise
+                await delay(
+                    backoff_with_jitter(attempt, context.deadline_ms)
+                )
+
+        raise RuntimeError("Retry budget exhausted.")
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    interface RetryContext {
+      operationId: string;
+      deadlineMs: number;
+      attemptsRemaining: number;
     }
 
-    context.attemptsRemaining -= 1;
-    attempt += 1;
+    async function executeWithRetryBudget<T>(
+      context: RetryContext,
+      operation: (attempt: number) => Promise<T>,
+    ): Promise<T> {
+      let attempt = 0;
 
-    try {
-      return await operation(attempt);
-    } catch (error) {
-      if (!isTransient(error) || context.attemptsRemaining === 0) {
-        throw error;
+      while (context.attemptsRemaining > 0) {
+        if (Date.now() >= context.deadlineMs) {
+          throw new Error("Retry deadline exhausted.");
+        }
+
+        context.attemptsRemaining -= 1;
+        attempt += 1;
+
+        try {
+          return await operation(attempt);
+        } catch (error) {
+          if (!isTransient(error) || context.attemptsRemaining === 0) {
+            throw error;
+          }
+          await delay(backoffWithJitter(attempt, context.deadlineMs));
+        }
       }
-      await delay(backoffWithJitter(attempt, context.deadlineMs));
-    }
-  }
 
-  throw new Error("Retry budget exhausted.");
-}
-```
+      throw new Error("Retry budget exhausted.");
+    }
+    ```
 
 The [Azure Architecture Center Retry pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/retry) recommends retrying only transient faults, limiting attempts and duration, and using increasing delays. The [Retry Storm antipattern](https://learn.microsoft.com/en-us/azure/architecture/antipatterns/retry-storm/) adds server signals, telemetry, and circuit breaking to prevent retries from intensifying an outage.
 

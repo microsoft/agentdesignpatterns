@@ -50,44 +50,95 @@ Do not use a sequential pipeline when independent stages could run concurrently 
 
 [Microsoft Agent Framework sequential orchestration](https://learn.microsoft.com/en-us/agent-framework/workflows/orchestrations/sequential) runs participants in a defined order and passes the conversation history through the pipeline. The following example separates drafting from review:
 
-```python
-import os
+=== "Python"
 
-from agent_framework.foundry import FoundryChatClient
-from agent_framework.orchestrations import SequentialBuilder
-from azure.identity import AzureCliCredential
+    ```python
+    import os
 
-client = FoundryChatClient(
-    project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
-    model=os.environ["FOUNDRY_MODEL"],
-    credential=AzureCliCredential(),
-)
+    from agent_framework.foundry import FoundryChatClient
+    from agent_framework.orchestrations import SequentialBuilder
+    from azure.identity import AzureCliCredential
 
-writer = client.as_agent(
-    name="writer",
-    instructions=(
-        "Draft one release note from the supplied change record. "
-        "Do not invent behavior or validation results."
-    ),
-)
+    client = FoundryChatClient(
+        project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
+        model=os.environ["FOUNDRY_MODEL"],
+        credential=AzureCliCredential(),
+    )
 
-reviewer = client.as_agent(
-    name="reviewer",
-    instructions=(
-        "Review the draft against the supplied change record. "
-        "Return a corrected release note and list any unsupported claims."
-    ),
-)
+    writer = client.as_agent(
+        name="writer",
+        instructions=(
+            "Draft one release note from the supplied change record. "
+            "Do not invent behavior or validation results."
+        ),
+    )
 
-workflow = SequentialBuilder(
-    participants=[writer, reviewer],
-).build()
+    reviewer = client.as_agent(
+        name="reviewer",
+        instructions=(
+            "Review the draft against the supplied change record. "
+            "Return a corrected release note and list any unsupported claims."
+        ),
+    )
 
-events = await workflow.run(
-    "Change: add tenant-scoped export with audit logging."
-)
-outputs = events.get_outputs()
-```
+    workflow = SequentialBuilder(
+        participants=[writer, reviewer],
+    ).build()
+
+    events = await workflow.run(
+        "Change: add tenant-scoped export with audit logging."
+    )
+    outputs = events.get_outputs()
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    interface AgentOptions {
+      name: string;
+      instructions: string;
+    }
+
+    interface Agent {}
+
+    interface WorkflowEvents {
+      getOutputs(): readonly unknown[];
+    }
+
+    interface SequentialWorkflow {
+      run(input: string): Promise<WorkflowEvents>;
+    }
+
+    interface AgentRuntime {
+      createAgent(options: AgentOptions): Agent;
+      createSequentialWorkflow(
+        participants: readonly Agent[],
+      ): SequentialWorkflow;
+    }
+
+    declare const runtime: AgentRuntime;
+
+    const writer = runtime.createAgent({
+      name: "writer",
+      instructions:
+        "Draft one release note from the supplied change record. " +
+        "Do not invent behavior or validation results.",
+    });
+
+    const reviewer = runtime.createAgent({
+      name: "reviewer",
+      instructions:
+        "Review the draft against the supplied change record. " +
+        "Return a corrected release note and list any unsupported claims.",
+    });
+
+    const workflow = runtime.createSequentialWorkflow([writer, reviewer]);
+
+    const events = await workflow.run(
+      "Change: add tenant-scoped export with audit logging.",
+    );
+    const outputs = events.getOutputs();
+    ```
 
 Treat the last agent response as a candidate result, not an automatic publication command. Validate its schema and required evidence in deterministic code before invoking a side-effecting publisher. If review must sometimes return work to the writer, model that bounded revision loop explicitly rather than hiding retries inside either prompt.
 

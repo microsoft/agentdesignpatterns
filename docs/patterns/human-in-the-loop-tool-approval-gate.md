@@ -52,50 +52,147 @@ Approval complements but does not replace [Contextual Tool Authorization](contex
 
 [Microsoft Agent Framework tool approval](https://learn.microsoft.com/en-us/agent-framework/agents/tools/tool-approval) marks selected functions with `approval_mode="always_require"`. When the agent proposes the tool, the framework returns a function approval request rather than executing it.
 
-```python
-from typing import Annotated
+=== "Python"
 
-from agent_framework import tool
+    ```python
+    from typing import Annotated
+
+    from agent_framework import tool
 
 
-@tool(approval_mode="always_require")
-async def issue_refund(
-    payment_id: Annotated[str, "Payment identifier"],
-    amount_minor: Annotated[int, "Refund amount in minor currency units"],
-    operation_id: Annotated[str, "Stable host-issued operation identifier"],
-) -> str:
-    return await payment_service.refund(
-        payment_id=payment_id,
-        amount_minor=amount_minor,
-        operation_id=operation_id,
-    )
-```
+    @tool(approval_mode="always_require")
+    async def issue_refund(
+        payment_id: Annotated[str, "Payment identifier"],
+        amount_minor: Annotated[int, "Refund amount in minor currency units"],
+        operation_id: Annotated[str, "Stable host-issued operation identifier"],
+    ) -> str:
+        return await payment_service.refund(
+            payment_id=payment_id,
+            amount_minor=amount_minor,
+            operation_id=operation_id,
+        )
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    interface RefundArguments {
+      paymentId: string;
+      amountMinor: number;
+      operationId: string;
+    }
+
+    interface ApprovalRequiredTool<TArguments, TResult> {
+      readonly approvalMode: "always_require";
+      invoke(arguments_: TArguments): Promise<TResult>;
+    }
+
+    declare const paymentService: {
+      refund(arguments_: RefundArguments): Promise<string>;
+    };
+
+    const issueRefund: ApprovalRequiredTool<RefundArguments, string> = {
+      approvalMode: "always_require",
+      async invoke(arguments_) {
+        return paymentService.refund(arguments_);
+      },
+    };
+    ```
 
 The application handling the approval request must show the tool name and arguments, authenticate the approver, and record a decision before returning the framework's approval response:
 
-```python
-async def resolve_approval(agent, session, query, approval_service):
-    result = await agent.run(query, session=session)
+=== "Python"
 
-    while result.user_input_requests:
-        responses = []
-        for request in result.user_input_requests:
-            proposal = {
-                "tool": request.function_call.name,
-                "arguments": request.function_call.arguments,
-            }
-            decision = await approval_service.decide(proposal)
-            responses.append(
-                Message(
-                    "user",
-                    [request.to_function_approval_response(decision.approved)],
+    ```python
+    async def resolve_approval(agent, session, query, approval_service):
+        result = await agent.run(query, session=session)
+
+        while result.user_input_requests:
+            responses = []
+            for request in result.user_input_requests:
+                proposal = {
+                    "tool": request.function_call.name,
+                    "arguments": request.function_call.arguments,
+                }
+                decision = await approval_service.decide(proposal)
+                responses.append(
+                    Message(
+                        "user",
+                        [request.to_function_approval_response(decision.approved)],
+                    )
                 )
-            )
 
-        result = await agent.run(responses, session=session)
+            result = await agent.run(responses, session=session)
 
-    return result
-```
+        return result
+    ```
+
+=== "TypeScript"
+
+    ```typescript
+    interface ApprovalRequest {
+      functionCall: {
+        name: string;
+        arguments: unknown;
+      };
+      toFunctionApprovalResponse(approved: boolean): unknown;
+    }
+
+    interface AgentResult {
+      userInputRequests: readonly ApprovalRequest[];
+    }
+
+    interface AgentSession {}
+
+    interface Agent {
+      run(
+        input: string | readonly UserMessage[],
+        options: { session: AgentSession },
+      ): Promise<AgentResult>;
+    }
+
+    interface UserMessage {
+      role: "user";
+      contents: readonly unknown[];
+    }
+
+    interface ApprovalService {
+      decide(proposal: {
+        tool: string;
+        arguments: unknown;
+      }): Promise<{ approved: boolean }>;
+    }
+
+    async function resolveApproval(
+      agent: Agent,
+      session: AgentSession,
+      query: string,
+      approvalService: ApprovalService,
+    ): Promise<AgentResult> {
+      let result = await agent.run(query, { session });
+
+      while (result.userInputRequests.length > 0) {
+        const responses: UserMessage[] = [];
+        for (const request of result.userInputRequests) {
+          const proposal = {
+            tool: request.functionCall.name,
+            arguments: request.functionCall.arguments,
+          };
+          const decision = await approvalService.decide(proposal);
+          responses.push({
+            role: "user",
+            contents: [
+              request.toFunctionApprovalResponse(decision.approved),
+            ],
+          });
+        }
+
+        result = await agent.run(responses, { session });
+      }
+
+      return result;
+    }
+    ```
 
 This focused example omits application-specific identity and persistence code. `approval_service.decide` must verify that the approver is permitted for the operation, record the proposal digest and decision, enforce expiry and separation-of-duties policy, and return rejection on any validation failure. Do not implement it as an unauthenticated terminal prompt in production.
 
